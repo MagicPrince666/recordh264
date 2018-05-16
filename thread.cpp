@@ -60,16 +60,16 @@ int main (int argc, char **argv)
 
     signal(SIGINT, sigint_handler);//信号处理
 
-    if (pthread_create(&pthread_id[0], NULL, recordaac, NULL))//开启录音
-        printf("Create recordaac error!\n");
+    // if (pthread_create(&pthread_id[0], NULL, recordaac, NULL))//开启录音
+    //     printf("Create recordaac error!\n");
 
     if (pthread_create(&pthread_id[1], NULL, cap_video, NULL))//开启视频录制
         printf("Create cap_video error!\n");
 
-    if(pthread_id[0] !=0) {                   
-            pthread_join(pthread_id[0],NULL);
-            printf("record %ld exit!\n",pthread_id[0]);
-    }
+    // if(pthread_id[0] !=0) {                   
+    //         pthread_join(pthread_id[0],NULL);
+    //         printf("record %ld exit!\n",pthread_id[0]);
+    // }
 
     if(pthread_id[1] !=0) {                   
             pthread_join(pthread_id[1],NULL);
