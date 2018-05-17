@@ -3,6 +3,7 @@ CROSS_COMPILE ?=
 #arm-linux-gnueabihf-
 
 CPP = $(CROSS_COMPILE)g++
+CC = $(CROSS_COMPILE)gcc
 
 TARGET	= h264_rec 
 
@@ -20,14 +21,19 @@ else
 LDFLAGS := -lpthread  -L./lib -lasound -L./lib/faac -lfaac
 endif
 
-FILES	= $(foreach dir,$(DIR),$(wildcard $(dir)/*.cpp))
+CXXFILES	= $(foreach dir,$(DIR),$(wildcard $(dir)/*.cpp))
+CFILES	= $(foreach dir,$(DIR),$(wildcard $(dir)/*.c))
 
-OBJS	= $(patsubst %.cpp,%.o,$(FILES))
+CXXOBJS	= $(patsubst %.cpp,%.o,$(CXXFILES))
+COBJS	= $(patsubst %.c,%.o,$(CFILES))
 
-all:$(OBJS) $(TARGET)
+all:$(CXXOBJS) $(COBJS) $(TARGET)
 
-$(OBJS):%.o:%.cpp
+$(CXXOBJS):%.o:%.cpp
 	$(CPP) $(CFLAGS) $(INC) -c -o $(OBJPATH)/$(notdir $@) $< 
+
+$(COBJS):%.o:%.c
+	$(CC) $(CFLAGS) $(INC) -c -o $(OBJPATH)/$(notdir $@) $< 
 
 $(TARGET):$(OBJPATH)
 	$(CPP) -o $@ $(OBJPATH)/*.o $(LDFLAGS)
