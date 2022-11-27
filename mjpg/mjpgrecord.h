@@ -19,4 +19,5 @@ private:
 
 private:
     struct vdIn *video_;
+    V4l2Video *mjpg_cap_;
 };

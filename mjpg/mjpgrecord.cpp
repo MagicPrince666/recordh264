@@ -20,7 +20,9 @@
 #include "mjpgrecord.h"
 
 
-MjpgRecord::MjpgRecord() {}
+MjpgRecord::MjpgRecord() {
+    mjpg_cap_ = nullptr;
+}
 
 MjpgRecord::~MjpgRecord() {}
 

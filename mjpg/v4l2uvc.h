@@ -71,18 +71,15 @@ public:
     ~V4l2Video();
     int InitVideoIn(struct vdIn *vd, char *device, int width, int height, int fps,
                     int format, int grabmethod, char *avifilename);
-
     int CloseV4l2(struct vdIn *vd);
-
-    int EnumFrameIntervals(int dev, __u32 pixfmt, __u32 width, __u32 height);
-    int EnumFrameSizes(int dev, __u32 pixfmt);
-    int EnumFrameFormats(int dev, unsigned int *supported_formats, unsigned int max_formats);
-
     int VideoEnable(struct vdIn *vd);
     int VideoDisable(struct vdIn *vd);
 
 private:
     int InitV4l2(struct vdIn *vd);
+    int EnumFrameIntervals(int dev, __u32 pixfmt, __u32 width, __u32 height);
+    int EnumFrameSizes(int dev, __u32 pixfmt);
+    int EnumFrameFormats(int dev, unsigned int *supported_formats, unsigned int max_formats);
 
 private:
     struct vdIn *video_;
