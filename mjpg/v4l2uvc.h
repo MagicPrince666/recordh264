@@ -59,7 +59,6 @@ struct vdIn {
     FILE *captureFile;
     unsigned int framesWritten;
     unsigned int bytesWritten;
-    char *avifilename;
     int framecount;
     int recordstart;
     int recordtime;

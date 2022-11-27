@@ -3,6 +3,10 @@
 #include <string.h>
 #include <sys/ioctl.h>
 
+#include "spdlog/spdlog.h"
+#include "spdlog/cfg/env.h"  // support for loading levels from the environment variable
+#include "spdlog/fmt/ostr.h" // support for user defined types
+
 #include "avilib.h"
 #include "epoll.h"
 #include "mjpgrecord.h"
@@ -10,16 +14,17 @@
 MjpgRecord::MjpgRecord(std::string file_name) : file_name_(file_name)
 {
     mjpg_cap_  = nullptr;
-    avi_file_  = nullptr;
     capturing_ = false;
 }
 
 MjpgRecord::~MjpgRecord()
 {
-    if (!avi_file_) {
-        fclose(avi_file_);
+    if (cat_avi_thread_.joinable()) {
+        cat_avi_thread_.join();
     }
+
     if (mjpg_cap_) {
+        mjpg_cap_->VideoDisable();
         mjpg_cap_->CloseV4l2();
         delete mjpg_cap_;
         delete video_;
@@ -28,32 +33,24 @@ MjpgRecord::~MjpgRecord()
 
 bool MjpgRecord::Init()
 {
-    std::string avi_file = "test.avi";
     int grabmethod = 1;
     int fps        = 30;
 
     video_               = new (std::nothrow) vdIn;
     mjpg_cap_            = new (std::nothrow) V4l2Video("/dev/video0", 1280, 720, fps, V4L2_PIX_FMT_MJPEG, grabmethod);
-    avi_lib_             = new (std::nothrow) AviLib(avi_file);
+    avi_lib_             = new (std::nothrow) AviLib(file_name_);
 
     if (mjpg_cap_->InitVideoIn() < 0) {
         exit(1);
     }
 
-    avi_file_ = fopen(file_name_.c_str(), "wb");
-    if (!avi_file_) {
-        printf("Unable to open file for raw frame capturing\n ");
-        exit(1);
-    }
-
-    if (mjpg_cap_->VideoEnable()) {
+    if (mjpg_cap_->VideoEnable() < 0) {
         exit(1);
     }
 
     avi_lib_->AviOpenOutputFile();
 
     avi_lib_->AviSetVideo(video_->width, video_->height, fps, (char *)"MJPG");
-    printf("recording to %s\n", video_->avifilename);
 
     cat_avi_thread_ = std::thread([](MjpgRecord *p_this) { p_this->VideoCapThread(); }, this);
     return true;
@@ -61,6 +58,7 @@ bool MjpgRecord::Init()
 
 void MjpgRecord::VideoCapThread()
 {
+    spdlog::info("Start video Capture and saving avi");
     if (!capturing_) {
         MY_EPOLL.EpollAdd(video_->fd, std::bind(&MjpgRecord::CapAndSaveVideo, this));
     }
@@ -80,8 +78,8 @@ bool MjpgRecord::CapAndSaveVideo()
     video_->buf.memory = V4L2_MEMORY_MMAP;
     int ret            = ioctl(video_->fd, VIDIOC_DQBUF, &video_->buf);
     if (ret < 0) {
-        printf("Unable to dequeue buffer");
-        return false;
+        spdlog::error("Unable to dequeue buffer");
+        exit(1);
     }
 
     memcpy(video_->tmpbuffer, video_->mem[video_->buf.index], video_->buf.bytesused);
@@ -91,8 +89,8 @@ bool MjpgRecord::CapAndSaveVideo()
 
     ret = ioctl(video_->fd, VIDIOC_QBUF, &video_->buf);
     if (ret < 0) {
-        printf("Unable to requeue buffer");
-        return false;
+        spdlog::error("Unable to requeue buffer");
+        exit(1);
     }
     return true;
 }

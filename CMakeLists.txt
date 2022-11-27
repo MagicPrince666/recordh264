@@ -25,7 +25,7 @@ add_subdirectory(epoll)
 add_subdirectory(ringbuf)
 add_subdirectory(mjpg)
 
-set(EXEC_NAME Record_H264)
+set(EXEC_NAME RecordVideo)
 
 add_executable(${EXEC_NAME} main.cpp
 )
@@ -33,5 +33,7 @@ add_executable(${EXEC_NAME} main.cpp
 target_link_libraries(${EXEC_NAME}
     pthread
     h264camera
+    mjpg
+    epoll
 )
 

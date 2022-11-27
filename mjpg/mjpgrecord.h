@@ -32,7 +32,6 @@ private:
 private:
     struct vdIn *video_;
     V4l2Video *mjpg_cap_;
-    FILE *avi_file_;
     std::string file_name_;
     AviLib *avi_lib_;
     std::thread cat_avi_thread_;

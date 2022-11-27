@@ -7,10 +7,31 @@
  * @copyright Copyright (c) {2021} 个人版权所有
  */
 
-#include <iostream> 
+#include <iostream>
+#include "spdlog/spdlog.h"
+#include "spdlog/cfg/env.h"  // support for loading levels from the environment variable
+#include "spdlog/fmt/ostr.h" // support for user defined types
+
+#include "mjpgrecord.h"
+#include "epoll.h"
 
 int main (int argc, char **argv) 
 {
+    std::string dev = "/dev/video0";
+    if(argc > 1) {
+        dev = (char *)argv[1];
+    }
+
+    spdlog::info("Use device {}", dev);
+
+    MjpgRecord mjpg("test.avi");
+
+    mjpg.Init();
+
+    while (1) {
+        MY_EPOLL.EpollLoop();
+    }
+
     return 0; 
 }
 

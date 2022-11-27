@@ -15,7 +15,11 @@ V4l2Video::V4l2Video(std::string device, int width, int height, int fps, int for
 }
 
 V4l2Video::~V4l2Video() {
+    CloseV4l2();
     if(video_) {
+        if(video_->fd) {
+            close(video_->fd);
+        }
         delete video_;
     }
 }
@@ -25,12 +29,10 @@ int V4l2Video::InitVideoIn()
     if (video_ == nullptr || v4l2_device_.empty()) {
         return -1;
     }
-    video_->videodevice = nullptr;
-    video_->status      = nullptr;
-    video_->pictName    = nullptr;
-    video_->videodevice = (char *)calloc(1, 16 * sizeof(char));
-    video_->status      = (char *)calloc(1, 100 * sizeof(char));
-    video_->pictName    = (char *)calloc(1, 80 * sizeof(char));
+
+    video_->videodevice = new (std::nothrow) char[16];
+    video_->status      = new (std::nothrow) char[100];
+    video_->pictName    =  new (std::nothrow) char[80];
     snprintf(video_->videodevice, 12, "%s", v4l2_device_.c_str());
     printf("Device information:\n");
     printf("  Device path:  %s\n", video_->videodevice);
@@ -50,24 +52,19 @@ int V4l2Video::InitVideoIn()
     if (InitV4l2() < 0) {
         printf(" Init v4L2 failed !! exit fatal\n");
         goto error;
-        ;
     }
     /* alloc a temp buffer to reconstruct the pict */
     video_->framesizeIn = (video_->width * video_->height << 1);
     switch (video_->formatIn) {
     case V4L2_PIX_FMT_MJPEG:
-        video_->tmpbuffer =
-            (unsigned char *)calloc(1, (size_t)video_->framesizeIn);
+        video_->tmpbuffer = new (std::nothrow) uint8_t[video_->framesizeIn];
         if (!video_->tmpbuffer) {
             goto error;
         }
-        video_->framebuffer =
-            (unsigned char *)calloc(1,
-                                    (size_t)video_->width * (video_->height + 8) * 2);
+        video_->framebuffer = new (std::nothrow) uint8_t[(size_t)video_->width * (video_->height + 8) * 2];
         break;
     case V4L2_PIX_FMT_YUYV:
-        video_->framebuffer =
-            (unsigned char *)calloc(1, (size_t)video_->framesizeIn);
+        video_->framebuffer = new (std::nothrow) uint8_t[(size_t)video_->framesizeIn];
         break;
     default:
         printf(" should never arrive exit fatal !!\n");
@@ -79,9 +76,9 @@ int V4l2Video::InitVideoIn()
     }
     return 0;
 error:
-    free(video_->videodevice);
-    free(video_->status);
-    free(video_->pictName);
+    delete[] video_->videodevice;
+    delete[] video_->status;
+    delete[] video_->pictName;
     close(video_->fd);
     return -1;
 }
@@ -107,7 +104,6 @@ int V4l2Video::InitV4l2()
         printf("Error opening device %s: video capture not supported.\n",
                video_->videodevice);
         return -1;
-        ;
     }
     if (video_->grabmethod) {
         if (!(video_->cap.capabilities & V4L2_CAP_STREAMING)) {
@@ -294,17 +290,29 @@ int V4l2Video::CloseV4l2()
         VideoDisable();
     }
     if (video_->tmpbuffer) {
-        free(video_->tmpbuffer);
+        delete[] video_->tmpbuffer;
+        video_->tmpbuffer = nullptr;
     }
-    video_->tmpbuffer = NULL;
-    free(video_->framebuffer);
-    video_->framebuffer = NULL;
-    free(video_->videodevice);
-    free(video_->status);
-    free(video_->pictName);
-    video_->videodevice = NULL;
-    video_->status      = NULL;
-    video_->pictName    = NULL;
+    if(video_->framebuffer) {
+        delete[] video_->framebuffer;
+        video_->framebuffer = nullptr;
+    }
+
+    if(video_->videodevice) {
+        delete[] video_->videodevice;
+        video_->videodevice = nullptr;
+    }
+
+    if(video_->status) {
+        delete[] video_->status;
+        video_->status = nullptr;
+    }
+
+    if(video_->pictName) {
+        delete[] video_->pictName;
+        video_->pictName = nullptr;
+    }
+
     return 0;
 }
 
