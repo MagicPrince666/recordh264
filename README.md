@@ -1,23 +1,95 @@
 # UVC H264 camera record
 
-# record264
+## 代码结构
 record video for H264 camera
-<br>文件夹：
-<br>include/  包含源码编译所需要的alsa库头文件以及faac库的头文件
-<br>lib/  linux系统的X86库文件包含alsa-lib动态库以及libfaac静态库
-<br>lib_arm/  linux系统的am335x库文件包含alsa-lib动态库以及libfaac静态库 
-<br>lib_mips/  openwrt系统的mipsel库文件包含alsa-lib动态库以及libfaac静态库 编译工具链是openwrt导出工具链
-<br>sound/  音频获取与编码
-<br>video/  H264视频的获取
+文件树：
+```
+.
+├── CMakeLists.txt
+├── README.md
+├── build
+├── cmake       # 各种平台的适配
+│   ├── build_for_darwin.cmake
+│   ├── build_for_f1c100s.cmake
+│   ├── build_for_h3.cmake
+│   ├── build_for_host.cmake
+│   ├── build_for_mipsel.cmake
+│   ├── build_for_v831.cmake
+│   └── macos_build_for_arm64.cmake
+├── epoll       # epoll 观察者模式
+│   ├── CMakeLists.txt
+│   ├── epoll.cpp
+│   └── epoll.h
+├── include
+│   ├── signal_queue.h
+│   └── spdlog
+├── main.cpp
+├── ringbuf     # 环形缓存区
+│   ├── CMakeLists.txt
+│   ├── ringbuffer.cpp
+│   └── ringbuffer.h
+├── sound       # 音频录制和编码
+│   ├── recorder.cpp
+│   └── recorder.h
+└── video       # H264视频的获取
+    ├── CMakeLists.txt
+    ├── H264_UVC_Cap.cpp
+    ├── H264_UVC_Cap.h
+    ├── debug.h
+    ├── h264_xu_ctrls.cpp
+    ├── h264_xu_ctrls.h
+    ├── v4l2uvc.cpp
+    └── v4l2uvc.h
+```
 
-<br>编译方式：
-<br>在linux平台下编译，使用make CROSS_COMPILE=XXX指定交叉工具链，或者不指定默认编译X86平台
+## 编译方式
 
-<br>
-<br>码农不易 尊重劳动
-<br>作者：小王子与木头人
-<br>功能：uvc录制H264
-<br>QQ：846863428 
-<br>TEL: 15220187476 
-<br>mail: huangliquanprince@icloud.com 
-<br>修改时间 ：2018-05-16 
+### 编译全志H3
+```
+$ mkdir build
+$ cd build
+$ cmake -DCMAKE_TOOLCHAIN_FILE=cmake/build_for_h3.cmake ..
+```
+### 编译全志V831
+```
+$ mkdir build
+$ cd build
+$ cmake -DCMAKE_TOOLCHAIN_FILE=cmake/build_for_v831.cmake ..
+```
+
+### 编译全志f1c100s
+```
+$ mkdir build
+$ cd build
+$ cmake -DCMAKE_TOOLCHAIN_FILE=cmake/build_for_f1c100s.cmake ..
+```
+### 编译本机
+```
+$ mkdir build
+$ cd build
+$ cmake -DCMAKE_TOOLCHAIN_FILE=cmake/build_for_host.cmake ..
+```
+### 编译MacOs
+```
+$ mkdir build
+$ cd build
+$ cmake -DCMAKE_TOOLCHAIN_FILE=cmake/build_for_darwin.cmake ..
+```
+
+## Donation
+码农不易 尊重劳动
+
+作者：小王子与木头人
+
+功能：uvc录制H264
+
+QQ：846863428
+
+TEL: 15220187476
+
+mail: huangliquanprince@icloud.com
+
+修改时间 ：2018-05-16
+
+![alipay](docs/alipay.jpg)
+![wechat](docs/wechat.png)

@@ -1,7 +1,6 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 3.1)
 SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 option(EXAMPLE "shall we complie example" on)
-# INCLUDE(build_for_host)
 
 include_directories(
     ${CMAKE_SOURCE_DIR}
@@ -20,7 +19,8 @@ SET(CMAKE_CXX_FLAGS_RELEASE "$ENV{CXXFLAGS} -O3 -Wall")
 
 MESSAGE(STATUS ${CMAKE_SYSTEM_NAME})
 
-add_subdirectory(video)
+add_subdirectory(h264camera)
+# add_subdirectory(camera)
 add_subdirectory(epoll)
 add_subdirectory(ringbuf)
 
