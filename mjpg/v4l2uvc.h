@@ -59,7 +59,6 @@ struct vdIn {
     FILE *captureFile;
     unsigned int framesWritten;
     unsigned int bytesWritten;
-    avi_t *avifile;
     char *avifilename;
     int framecount;
     int recordstart;
@@ -69,16 +68,16 @@ struct vdIn {
 class V4l2Video
 {
 public:
-    V4l2Video(std::string device = "/dev/video0");
+    V4l2Video(std::string device, int width, int height, int fps, int format, int grabmethod);
     ~V4l2Video();
-    int InitVideoIn(struct vdIn *vd, int width, int height, int fps,
-                    int format, int grabmethod);
-    int CloseV4l2(struct vdIn *vd);
-    int VideoEnable(struct vdIn *vd);
-    int VideoDisable(struct vdIn *vd);
+
+    int InitVideoIn();
+    int CloseV4l2();
+    int VideoEnable();
+    int VideoDisable();
 
 private:
-    int InitV4l2(struct vdIn *vd);
+    int InitV4l2();
     int EnumFrameIntervals(int dev, __u32 pixfmt, __u32 width, __u32 height);
     int EnumFrameSizes(int dev, __u32 pixfmt);
     int EnumFrameFormats(int dev, unsigned int *supported_formats, unsigned int max_formats);

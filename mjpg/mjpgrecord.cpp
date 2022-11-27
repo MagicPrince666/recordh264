@@ -1,20 +1,7 @@
-#include <errno.h>
-#include <fcntl.h>
-#include <linux/videodev2.h>
 #include <new>
-#include <pthread.h>
-#include <signal.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
-#include <sys/file.h>
 #include <sys/ioctl.h>
-#include <sys/mman.h>
-#include <sys/stat.h>
-#include <sys/time.h>
-#include <sys/types.h>
-#include <time.h>
-#include <unistd.h>
 
 #include "avilib.h"
 #include "epoll.h"
@@ -33,7 +20,7 @@ MjpgRecord::~MjpgRecord()
         fclose(avi_file_);
     }
     if (mjpg_cap_) {
-        mjpg_cap_->CloseV4l2(video_);
+        mjpg_cap_->CloseV4l2();
         delete mjpg_cap_;
         delete video_;
     }
@@ -42,13 +29,14 @@ MjpgRecord::~MjpgRecord()
 bool MjpgRecord::Init()
 {
     std::string avi_file = "test.avi";
-    video_               = new (std::nothrow) vdIn;
-    mjpg_cap_            = new (std::nothrow) V4l2Video("/dev/video0");
-    avi_lib_             = new (std::nothrow) AviLib(avi_file);
-
     int grabmethod = 1;
     int fps        = 30;
-    if (mjpg_cap_->InitVideoIn(video_, 1280, 720, fps, V4L2_PIX_FMT_MJPEG, grabmethod) < 0) {
+
+    video_               = new (std::nothrow) vdIn;
+    mjpg_cap_            = new (std::nothrow) V4l2Video("/dev/video0", 1280, 720, fps, V4L2_PIX_FMT_MJPEG, grabmethod);
+    avi_lib_             = new (std::nothrow) AviLib(avi_file);
+
+    if (mjpg_cap_->InitVideoIn() < 0) {
         exit(1);
     }
 
@@ -58,15 +46,11 @@ bool MjpgRecord::Init()
         exit(1);
     }
 
-    if (mjpg_cap_->VideoEnable(video_)) {
+    if (mjpg_cap_->VideoEnable()) {
         exit(1);
     }
 
     avi_lib_->AviOpenOutputFile();
-    if (video_->avifile == NULL) {
-        printf("Error opening avifile %s\n", avi_file.c_str());
-        exit(1);
-    }
 
     avi_lib_->AviSetVideo(video_->width, video_->height, fps, (char *)"MJPG");
     printf("recording to %s\n", video_->avifilename);

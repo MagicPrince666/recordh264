@@ -3,120 +3,120 @@
 
 static int debug = 0;
 
-V4l2Video::V4l2Video(std::string device) : v4l2_device_(device)
+V4l2Video::V4l2Video(std::string device, int width, int height, int fps, int format, int grabmethod)
+: v4l2_device_(device)
 {
+    video_ = new (std::nothrow) vdIn;
+    video_->width            = width;
+    video_->height           = height;
+    video_->fps              = fps;
+    video_->formatIn         = format;
+    video_->grabmethod       = grabmethod;
 }
 
-V4l2Video::~V4l2Video() {}
+V4l2Video::~V4l2Video() {
+    if(video_) {
+        delete video_;
+    }
+}
 
-int V4l2Video::InitVideoIn(struct vdIn *vd, int width, int height, int fps,
-                           int format, int grabmethod)
+int V4l2Video::InitVideoIn()
 {
-    if (vd == NULL || v4l2_device_.empty()) {
+    if (video_ == nullptr || v4l2_device_.empty()) {
         return -1;
     }
-    if (width == 0 || height == 0) {
-        return -1;
-    }
-    if (grabmethod < 0 || grabmethod > 1) {
-        grabmethod = 1; // mmap by default;
-    }
-    vd->videodevice = NULL;
-    vd->status      = NULL;
-    vd->pictName    = NULL;
-    vd->videodevice = (char *)calloc(1, 16 * sizeof(char));
-    vd->status      = (char *)calloc(1, 100 * sizeof(char));
-    vd->pictName    = (char *)calloc(1, 80 * sizeof(char));
-    snprintf(vd->videodevice, 12, "%s", v4l2_device_.c_str());
+    video_->videodevice = nullptr;
+    video_->status      = nullptr;
+    video_->pictName    = nullptr;
+    video_->videodevice = (char *)calloc(1, 16 * sizeof(char));
+    video_->status      = (char *)calloc(1, 100 * sizeof(char));
+    video_->pictName    = (char *)calloc(1, 80 * sizeof(char));
+    snprintf(video_->videodevice, 12, "%s", v4l2_device_.c_str());
     printf("Device information:\n");
-    printf("  Device path:  %s\n", vd->videodevice);
-    vd->toggleAvi        = 0;
-    vd->avifile          = NULL;
-    vd->recordtime       = 0;
-    vd->framecount       = 0;
-    vd->recordstart      = 0;
-    vd->getPict          = 0;
-    vd->signalquit       = 1;
-    vd->width            = width;
-    vd->height           = height;
-    vd->fps              = fps;
-    vd->formatIn         = format;
-    vd->grabmethod       = grabmethod;
-    vd->fileCounter      = 0;
-    vd->rawFrameCapture  = 0;
-    vd->rfsBytesWritten  = 0;
-    vd->rfsFramesWritten = 0;
-    vd->captureFile      = NULL;
-    vd->bytesWritten     = 0;
-    vd->framesWritten    = 0;
-    if (InitV4l2(vd) < 0) {
+    printf("  Device path:  %s\n", video_->videodevice);
+    video_->toggleAvi        = 0;
+    video_->recordtime       = 0;
+    video_->framecount       = 0;
+    video_->recordstart      = 0;
+    video_->getPict          = 0;
+    video_->signalquit       = 1;
+    video_->fileCounter      = 0;
+    video_->rawFrameCapture  = 0;
+    video_->rfsBytesWritten  = 0;
+    video_->rfsFramesWritten = 0;
+    video_->captureFile      = nullptr;
+    video_->bytesWritten     = 0;
+    video_->framesWritten    = 0;
+    if (InitV4l2() < 0) {
         printf(" Init v4L2 failed !! exit fatal\n");
         goto error;
         ;
     }
     /* alloc a temp buffer to reconstruct the pict */
-    vd->framesizeIn = (vd->width * vd->height << 1);
-    switch (vd->formatIn) {
+    video_->framesizeIn = (video_->width * video_->height << 1);
+    switch (video_->formatIn) {
     case V4L2_PIX_FMT_MJPEG:
-        vd->tmpbuffer =
-            (unsigned char *)calloc(1, (size_t)vd->framesizeIn);
-        if (!vd->tmpbuffer)
+        video_->tmpbuffer =
+            (unsigned char *)calloc(1, (size_t)video_->framesizeIn);
+        if (!video_->tmpbuffer) {
             goto error;
-        vd->framebuffer =
+        }
+        video_->framebuffer =
             (unsigned char *)calloc(1,
-                                    (size_t)vd->width * (vd->height + 8) * 2);
+                                    (size_t)video_->width * (video_->height + 8) * 2);
         break;
     case V4L2_PIX_FMT_YUYV:
-        vd->framebuffer =
-            (unsigned char *)calloc(1, (size_t)vd->framesizeIn);
+        video_->framebuffer =
+            (unsigned char *)calloc(1, (size_t)video_->framesizeIn);
         break;
     default:
         printf(" should never arrive exit fatal !!\n");
         goto error;
         break;
     }
-    if (!vd->framebuffer)
+    if (!video_->framebuffer) {
         goto error;
+    }
     return 0;
 error:
-    free(vd->videodevice);
-    free(vd->status);
-    free(vd->pictName);
-    close(vd->fd);
+    free(video_->videodevice);
+    free(video_->status);
+    free(video_->pictName);
+    close(video_->fd);
     return -1;
 }
 
-int V4l2Video::InitV4l2(struct vdIn *vd)
+int V4l2Video::InitV4l2()
 {
     unsigned int i;
     int ret = 0;
 
-    if ((vd->fd = open(vd->videodevice, O_RDWR)) == -1) {
+    if ((video_->fd = open(video_->videodevice, O_RDWR)) == -1) {
         perror("ERROR opening V4L interface");
         exit(1);
     }
-    memset(&vd->cap, 0, sizeof(struct v4l2_capability));
-    ret = ioctl(vd->fd, VIDIOC_QUERYCAP, &vd->cap);
+    memset(&video_->cap, 0, sizeof(struct v4l2_capability));
+    ret = ioctl(video_->fd, VIDIOC_QUERYCAP, &video_->cap);
     if (ret < 0) {
         printf("Error opening device %s: unable to query device.\n",
-               vd->videodevice);
+               video_->videodevice);
         return -1;
     }
 
-    if ((vd->cap.capabilities & V4L2_CAP_VIDEO_CAPTURE) == 0) {
+    if ((video_->cap.capabilities & V4L2_CAP_VIDEO_CAPTURE) == 0) {
         printf("Error opening device %s: video capture not supported.\n",
-               vd->videodevice);
+               video_->videodevice);
         return -1;
         ;
     }
-    if (vd->grabmethod) {
-        if (!(vd->cap.capabilities & V4L2_CAP_STREAMING)) {
-            printf("%s does not support streaming i/o\n", vd->videodevice);
+    if (video_->grabmethod) {
+        if (!(video_->cap.capabilities & V4L2_CAP_STREAMING)) {
+            printf("%s does not support streaming i/o\n", video_->videodevice);
             return -1;
         }
     } else {
-        if (!(vd->cap.capabilities & V4L2_CAP_READWRITE)) {
-            printf("%s does not support read i/o\n", vd->videodevice);
+        if (!(video_->cap.capabilities & V4L2_CAP_READWRITE)) {
+            printf("%s does not support read i/o\n", video_->videodevice);
             return -1;
         }
     }
@@ -127,12 +127,12 @@ int V4l2Video::InitV4l2(struct vdIn *vd)
     // is available. If not, we try to fall back to YUYV.
     unsigned int device_formats[16] = {0}; // Assume no device supports more than 16 formats
     int requested_format_found = 0, fallback_format = -1;
-    if (EnumFrameFormats(vd->fd, device_formats, ARRAY_SIZE(device_formats))) {
+    if (EnumFrameFormats(video_->fd, device_formats, ARRAY_SIZE(device_formats))) {
         printf("Unable to enumerate frame formats");
         return -1;
     }
     for (i = 0; i < ARRAY_SIZE(device_formats) && device_formats[i]; i++) {
-        if (device_formats[i] == (unsigned int)(vd->formatIn)) {
+        if (device_formats[i] == (unsigned int)(video_->formatIn)) {
             requested_format_found = 1;
             break;
         }
@@ -141,43 +141,43 @@ int V4l2Video::InitV4l2(struct vdIn *vd)
     }
     if (requested_format_found) {
         // The requested format is supported
-        printf("  Frame format: " FOURCC_FORMAT "\n", FOURCC_ARGS(vd->formatIn));
+        printf("  Frame format: " FOURCC_FORMAT "\n", FOURCC_ARGS(video_->formatIn));
     } else if (fallback_format >= 0) {
         // The requested format is not supported but there's a fallback format
         printf("  Frame format: " FOURCC_FORMAT " (" FOURCC_FORMAT
                " is not supported by device)\n",
-               FOURCC_ARGS(device_formats[0]), FOURCC_ARGS(vd->formatIn));
-        vd->formatIn = device_formats[0];
+               FOURCC_ARGS(device_formats[0]), FOURCC_ARGS(video_->formatIn));
+        video_->formatIn = device_formats[0];
     } else {
         // The requested format is not supported and no fallback format is available
         printf("ERROR: Requested frame format " FOURCC_FORMAT " is not available "
                "and no fallback format was found.\n",
-               FOURCC_ARGS(vd->formatIn));
+               FOURCC_ARGS(video_->formatIn));
         return -1;
     }
 
     // Set pixel format and frame size
-    memset(&vd->fmt, 0, sizeof(struct v4l2_format));
-    vd->fmt.type                = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-    vd->fmt.fmt.pix.width       = vd->width;
-    vd->fmt.fmt.pix.height      = vd->height;
-    vd->fmt.fmt.pix.pixelformat = vd->formatIn;
-    vd->fmt.fmt.pix.field       = V4L2_FIELD_ANY;
-    ret                         = ioctl(vd->fd, VIDIOC_S_FMT, &vd->fmt);
+    memset(&video_->fmt, 0, sizeof(struct v4l2_format));
+    video_->fmt.type                = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+    video_->fmt.fmt.pix.width       = video_->width;
+    video_->fmt.fmt.pix.height      = video_->height;
+    video_->fmt.fmt.pix.pixelformat = video_->formatIn;
+    video_->fmt.fmt.pix.field       = V4L2_FIELD_ANY;
+    ret                         = ioctl(video_->fd, VIDIOC_S_FMT, &video_->fmt);
     if (ret < 0) {
         perror("Unable to set format");
         return -1;
     }
-    if ((vd->fmt.fmt.pix.width != (unsigned int)(vd->width)) ||
-        (vd->fmt.fmt.pix.height != (unsigned int)(vd->height))) {
+    if ((video_->fmt.fmt.pix.width != (unsigned int)(video_->width)) ||
+        (video_->fmt.fmt.pix.height != (unsigned int)(video_->height))) {
         printf("  Frame size:   %ux%u (requested size %ux%u is not supported by device)\n",
-               vd->fmt.fmt.pix.width, vd->fmt.fmt.pix.height, vd->width, vd->height);
-        vd->width  = vd->fmt.fmt.pix.width;
-        vd->height = vd->fmt.fmt.pix.height;
+               video_->fmt.fmt.pix.width, video_->fmt.fmt.pix.height, video_->width, video_->height);
+        video_->width  = video_->fmt.fmt.pix.width;
+        video_->height = video_->fmt.fmt.pix.height;
         /* look the format is not part of the deal ??? */
-        // vd->formatIn = vd->fmt.fmt.pix.pixelformat;
+        // video_->formatIn = video_->fmt.fmt.pix.pixelformat;
     } else {
-        printf("  Frame size:   %dx%d\n", vd->width, vd->height);
+        printf("  Frame size:   %dx%d\n", video_->width, video_->height);
     }
 
     /* set framerate */
@@ -186,23 +186,23 @@ int V4l2Video::InitV4l2(struct vdIn *vd)
     memset(setfps, 0, sizeof(struct v4l2_streamparm));
     setfps->type                                  = V4L2_BUF_TYPE_VIDEO_CAPTURE;
     setfps->parm.capture.timeperframe.numerator   = 1;
-    setfps->parm.capture.timeperframe.denominator = vd->fps;
-    ret                                           = ioctl(vd->fd, VIDIOC_S_PARM, setfps);
+    setfps->parm.capture.timeperframe.denominator = video_->fps;
+    ret                                           = ioctl(video_->fd, VIDIOC_S_PARM, setfps);
     if (ret == -1) {
         perror("Unable to set frame rate");
         return -1;
     }
-    ret = ioctl(vd->fd, VIDIOC_G_PARM, setfps);
+    ret = ioctl(video_->fd, VIDIOC_G_PARM, setfps);
     if (ret == 0) {
         if (setfps->parm.capture.timeperframe.numerator != 1 ||
-            setfps->parm.capture.timeperframe.denominator != (unsigned int)(vd->fps)) {
+            setfps->parm.capture.timeperframe.denominator != (unsigned int)(video_->fps)) {
             printf("  Frame rate:   %u/%u fps (requested frame rate %u fps is "
                    "not supported by device)\n",
                    setfps->parm.capture.timeperframe.denominator,
                    setfps->parm.capture.timeperframe.numerator,
-                   vd->fps);
+                   video_->fps);
         } else {
-            printf("  Frame rate:   %d fps\n", vd->fps);
+            printf("  Frame rate:   %d fps\n", video_->fps);
         }
     } else {
         perror("Unable to read out current frame rate");
@@ -210,47 +210,48 @@ int V4l2Video::InitV4l2(struct vdIn *vd)
     }
 
     /* request buffers */
-    memset(&vd->rb, 0, sizeof(struct v4l2_requestbuffers));
-    vd->rb.count  = NB_BUFFER;
-    vd->rb.type   = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-    vd->rb.memory = V4L2_MEMORY_MMAP;
+    memset(&video_->rb, 0, sizeof(struct v4l2_requestbuffers));
+    video_->rb.count  = NB_BUFFER;
+    video_->rb.type   = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+    video_->rb.memory = V4L2_MEMORY_MMAP;
 
-    ret = ioctl(vd->fd, VIDIOC_REQBUFS, &vd->rb);
+    ret = ioctl(video_->fd, VIDIOC_REQBUFS, &video_->rb);
     if (ret < 0) {
         perror("Unable to allocate buffers");
         return -1;
     }
     /* map the buffers */
     for (i = 0; i < NB_BUFFER; i++) {
-        memset(&vd->buf, 0, sizeof(struct v4l2_buffer));
-        vd->buf.index  = i;
-        vd->buf.type   = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-        vd->buf.memory = V4L2_MEMORY_MMAP;
-        ret            = ioctl(vd->fd, VIDIOC_QUERYBUF, &vd->buf);
+        memset(&video_->buf, 0, sizeof(struct v4l2_buffer));
+        video_->buf.index  = i;
+        video_->buf.type   = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+        video_->buf.memory = V4L2_MEMORY_MMAP;
+        ret            = ioctl(video_->fd, VIDIOC_QUERYBUF, &video_->buf);
         if (ret < 0) {
             perror("Unable to query buffer");
             return -1;
         }
-        if (debug)
-            printf("length: %u offset: %u\n", vd->buf.length,
-                   vd->buf.m.offset);
-        vd->mem[i] = mmap(0 /* start anywhere */,
-                          vd->buf.length, PROT_READ, MAP_SHARED, vd->fd,
-                          vd->buf.m.offset);
-        if (vd->mem[i] == MAP_FAILED) {
+        if (debug) {
+            printf("length: %u offset: %u\n", video_->buf.length,
+                   video_->buf.m.offset);
+        }
+        video_->mem[i] = mmap(0 /* start anywhere */,
+                          video_->buf.length, PROT_READ, MAP_SHARED, video_->fd,
+                          video_->buf.m.offset);
+        if (video_->mem[i] == MAP_FAILED) {
             perror("Unable to map buffer");
             return -1;
         }
         if (debug)
-            printf("Buffer mapped at address %p.\n", vd->mem[i]);
+            printf("Buffer mapped at address %p.\n", video_->mem[i]);
     }
     /* Queue the buffers. */
     for (i = 0; i < NB_BUFFER; ++i) {
-        memset(&vd->buf, 0, sizeof(struct v4l2_buffer));
-        vd->buf.index  = i;
-        vd->buf.type   = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-        vd->buf.memory = V4L2_MEMORY_MMAP;
-        ret            = ioctl(vd->fd, VIDIOC_QBUF, &vd->buf);
+        memset(&video_->buf, 0, sizeof(struct v4l2_buffer));
+        video_->buf.index  = i;
+        video_->buf.type   = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+        video_->buf.memory = V4L2_MEMORY_MMAP;
+        ret            = ioctl(video_->fd, VIDIOC_QBUF, &video_->buf);
         if (ret < 0) {
             perror("Unable to queue buffer");
             return -1;
@@ -259,49 +260,51 @@ int V4l2Video::InitV4l2(struct vdIn *vd)
     return 0;
 }
 
-int V4l2Video::VideoEnable(struct vdIn *vd)
+int V4l2Video::VideoEnable()
 {
     int type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
     int ret;
 
-    ret = ioctl(vd->fd, VIDIOC_STREAMON, &type);
+    ret = ioctl(video_->fd, VIDIOC_STREAMON, &type);
     if (ret < 0) {
         perror("Unable to start capture");
         return ret;
     }
-    vd->isstreaming = 1;
+    video_->isstreaming = 1;
     return 0;
 }
 
-int V4l2Video::VideoDisable(struct vdIn *vd)
+int V4l2Video::VideoDisable()
 {
     int type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
     int ret;
 
-    ret = ioctl(vd->fd, VIDIOC_STREAMOFF, &type);
+    ret = ioctl(video_->fd, VIDIOC_STREAMOFF, &type);
     if (ret < 0) {
         perror("Unable to stop capture");
         return ret;
     }
-    vd->isstreaming = 0;
+    video_->isstreaming = 0;
     return 0;
 }
 
-int V4l2Video::CloseV4l2(struct vdIn *vd)
+int V4l2Video::CloseV4l2()
 {
-    if (vd->isstreaming)
-        VideoDisable(vd);
-    if (vd->tmpbuffer)
-        free(vd->tmpbuffer);
-    vd->tmpbuffer = NULL;
-    free(vd->framebuffer);
-    vd->framebuffer = NULL;
-    free(vd->videodevice);
-    free(vd->status);
-    free(vd->pictName);
-    vd->videodevice = NULL;
-    vd->status      = NULL;
-    vd->pictName    = NULL;
+    if (video_->isstreaming) {
+        VideoDisable();
+    }
+    if (video_->tmpbuffer) {
+        free(video_->tmpbuffer);
+    }
+    video_->tmpbuffer = NULL;
+    free(video_->framebuffer);
+    video_->framebuffer = NULL;
+    free(video_->videodevice);
+    free(video_->status);
+    free(video_->pictName);
+    video_->videodevice = NULL;
+    video_->status      = NULL;
+    video_->pictName    = NULL;
     return 0;
 }
 
