@@ -16,6 +16,8 @@
 #include <sys/select.h>
 #include <unistd.h>
 
+#include <iostream>
+
 #include "avilib.h"
 
 #define NB_BUFFER 4
@@ -67,10 +69,10 @@ struct vdIn {
 class V4l2Video
 {
 public:
-    V4l2Video();
+    V4l2Video(std::string device = "/dev/video0");
     ~V4l2Video();
-    int InitVideoIn(struct vdIn *vd, char *device, int width, int height, int fps,
-                    int format, int grabmethod, char *avifilename);
+    int InitVideoIn(struct vdIn *vd, int width, int height, int fps,
+                    int format, int grabmethod);
     int CloseV4l2(struct vdIn *vd);
     int VideoEnable(struct vdIn *vd);
     int VideoDisable(struct vdIn *vd);
@@ -83,4 +85,5 @@ private:
 
 private:
     struct vdIn *video_;
+    std::string v4l2_device_;
 };

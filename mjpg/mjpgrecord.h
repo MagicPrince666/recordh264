@@ -8,16 +8,33 @@
  */
 #pragma once
 
+#include "v4l2uvc.h"
+#include "avilib.h"
+
+#include <iostream>
+#include <thread>
+
 class MjpgRecord
 {
 public:
-    MjpgRecord();
+    MjpgRecord(std::string file_name);
     ~MjpgRecord();
 
+    bool Init();
+
+    void StopCap();
+
 private:
-    
+    bool CapAndSaveVideo();
+
+    void VideoCapThread();
 
 private:
     struct vdIn *video_;
     V4l2Video *mjpg_cap_;
+    FILE *avi_file_;
+    std::string file_name_;
+    AviLib *avi_lib_;
+    std::thread cat_avi_thread_;
+    bool capturing_;
 };

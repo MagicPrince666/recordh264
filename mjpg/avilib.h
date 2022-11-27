@@ -6,6 +6,7 @@
  * @date 2022-11-27
  * @copyright Copyright (c) {2021} 个人版权所有
  */
+
 #include <fcntl.h>
 #include <stdio.h>
 #include <sys/stat.h>
@@ -33,8 +34,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-#ifndef AVILIB_H
-#define AVILIB_H
+#pragma once
+
+#include <iostream>
 
 #define AVI_MAX_TRACKS 8
 
@@ -173,47 +175,34 @@ typedef struct
 #define AVI_MODE_READ 1
 
 /* The error codes delivered by avi_open_input_file */
-
-#define AVI_ERR_SIZELIM 1 /* The write of the data would exceed   \
-                             the maximum size of the AVI file.    \
-                             This is more a warning than an error \
-                             since the file may be closed safely */
-
-#define AVI_ERR_OPEN 2 /* Error opening the AVI file - wrong path \
-                          name or file nor readable/writable */
-
-#define AVI_ERR_READ 3 /* Error reading from AVI File */
-
-#define AVI_ERR_WRITE 4 /* Error writing to AVI File, \
-                           disk full ??? */
-
+#define AVI_ERR_SIZELIM 1     /* The write of the data would exceed   \
+                                 the maximum size of the AVI file.    \
+                                 This is more a warning than an error \
+                                 since the file may be closed safely */
+#define AVI_ERR_OPEN 2        /* Error opening the AVI file - wrong path \
+                                 name or file nor readable/writable */
+#define AVI_ERR_READ 3        /* Error reading from AVI File */
+#define AVI_ERR_WRITE 4       /* Error writing to AVI File, \
+                                 disk full ??? */
 #define AVI_ERR_WRITE_INDEX 5 /* Could not write index to AVI file \
                                  during close, file may still be   \
                                  usable */
-
-#define AVI_ERR_CLOSE 6 /* Could not write header to AVI file     \
-                           or not truncate the file during close, \
-                           file is most probably corrupted */
-
-#define AVI_ERR_NOT_PERM 7 /* Operation not permitted:        \
-                              trying to read from a file open \
-                              for writing or vice versa */
-
-#define AVI_ERR_NO_MEM 8 /* malloc failed */
-
-#define AVI_ERR_NO_AVI 9 /* Not an AVI file */
-
-#define AVI_ERR_NO_HDRL 10 /* AVI file has no has no header list, \
-                              corrupted ??? */
-
-#define AVI_ERR_NO_MOVI 11 /* AVI file has no has no MOVI list, \
-                              corrupted ??? */
-
-#define AVI_ERR_NO_VIDS 12 /* AVI file contains no video data */
-
-#define AVI_ERR_NO_IDX 13 /* The file has been opened with          \
-                             getIndex==0, but an operation has been \
-                             performed that needs an index */
+#define AVI_ERR_CLOSE 6       /* Could not write header to AVI file     \
+                                 or not truncate the file during close, \
+                                 file is most probably corrupted */
+#define AVI_ERR_NOT_PERM 7    /* Operation not permitted:        \
+                                 trying to read from a file open \
+                                 for writing or vice versa */
+#define AVI_ERR_NO_MEM 8      /* malloc failed */
+#define AVI_ERR_NO_AVI 9      /* Not an AVI file */
+#define AVI_ERR_NO_HDRL 10    /* AVI file has no has no header list, \
+                                 corrupted ??? */
+#define AVI_ERR_NO_MOVI 11    /* AVI file has no has no MOVI list, \
+                                 corrupted ??? */
+#define AVI_ERR_NO_VIDS 12    /* AVI file contains no video data */
+#define AVI_ERR_NO_IDX 13     /* The file has been opened with          \
+                                 getIndex==0, but an operation has been \
+                                 performed that needs an index */
 
 /* Possible Audio formats */
 
@@ -236,51 +225,93 @@ typedef struct
 #define IBM_FORMAT_ADPCM (0x0103)
 #endif
 
-avi_t *AVI_open_output_file(char *filename);
-int avi_update_header(avi_t *AVI);
-void AVI_set_video(avi_t *AVI, int width, int height, double fps, char *compressor);
-int AVI_write_frame(avi_t *AVI, char *data, long bytes, int keyframe);
+#define HEADERBYTES 2048
+#define AVI_MAX_LEN (UINT_MAX - (1 << 20) * 16 - HEADERBYTES)
+#define FRAME_RATE_SCALE 1000000
+#define MAX_INFO_STRLEN 64
 
-struct riff_struct {
-    unsigned char id[4]; /* RIFF */
-    uint32_t len;
-    unsigned char wave_id[4]; /* WAVE */
+#define OUT4CC(s)                       \
+    if (nhb <= HEADERBYTES - 4)         \
+        memcpy(AVI_header + nhb, s, 4); \
+    nhb += 4
+
+#define OUTLONG(n)                     \
+    if (nhb <= HEADERBYTES - 4)        \
+        Long2Str(AVI_header + nhb, n); \
+    nhb += 4
+
+#define OUTSHRT(n)                             \
+    if (nhb <= HEADERBYTES - 2) {              \
+        AVI_header[nhb]     = (n)&0xff;        \
+        AVI_header[nhb + 1] = (n >> 8) & 0xff; \
+    }                                          \
+    nhb += 2
+#define PAD_EVEN(x) (((x) + 1) & ~1)
+
+class AviLib
+{
+public:
+    AviLib(std::string filename);
+    ~AviLib();
+
+    bool AviOpenOutputFile();
+    void AviSetVideo(int width, int height, double fps, char *compressor);
+    int AviWriteFrame(char *data, long bytes, int keyframe);
+
+private:
+    struct riff_struct {
+        unsigned char id[4]; /* RIFF */
+        uint32_t len;
+        unsigned char wave_id[4]; /* WAVE */
+    };
+
+    struct chunk_struct {
+        unsigned char id[4];
+        uint32_t len;
+    };
+
+    struct common_struct {
+        uint16_t wFormatTag;
+        uint16_t wChannels;
+        uint32_t dwSamplesPerSec;
+        uint32_t dwAvgBytesPerSec;
+        uint16_t wBlockAlign;
+        uint16_t wBitsPerSample; /* Only for PCM */
+    };
+
+    struct wave_header {
+        struct riff_struct riff;
+        struct chunk_struct format;
+        struct common_struct common;
+        struct chunk_struct data;
+    };
+
+    struct AVIStreamHeader {
+        long fccType;
+        long fccHandler;
+        long dwFlags;
+        long dwPriority;
+        long dwInitialFrames;
+        long dwScale;
+        long dwRate;
+        long dwStart;
+        long dwLength;
+        long dwSuggestedBufferSize;
+        long dwQuality;
+        long dwSampleSize;
+    };
+
+    avi_t *avi_;
+    char id_str_[MAX_INFO_STRLEN];
+    int64_t Avi_errno_;
+    std::string avi_file_name_;
+
+private:
+    int AviUpdateHeader();
+    size_t AviWrite(int fd, char *buf, size_t len);
+    void Long2Str(unsigned char *dst, int n);
+    int AviSampSize(int j);
+    int AviAddChunk(unsigned char *tag, unsigned char *data, int length);
+    int AviAddIndexEntry(unsigned char *tag, long flags, unsigned long pos, unsigned long len);
+    int AviWriteData(char *data, unsigned long length, int audio, int keyframe);
 };
-
-struct chunk_struct {
-    unsigned char id[4];
-    uint32_t len;
-};
-
-struct common_struct {
-    uint16_t wFormatTag;
-    uint16_t wChannels;
-    uint32_t dwSamplesPerSec;
-    uint32_t dwAvgBytesPerSec;
-    uint16_t wBlockAlign;
-    uint16_t wBitsPerSample; /* Only for PCM */
-};
-
-struct wave_header {
-    struct riff_struct riff;
-    struct chunk_struct format;
-    struct common_struct common;
-    struct chunk_struct data;
-};
-
-struct AVIStreamHeader {
-    long fccType;
-    long fccHandler;
-    long dwFlags;
-    long dwPriority;
-    long dwInitialFrames;
-    long dwScale;
-    long dwRate;
-    long dwStart;
-    long dwLength;
-    long dwSuggestedBufferSize;
-    long dwQuality;
-    long dwSampleSize;
-};
-
-#endif

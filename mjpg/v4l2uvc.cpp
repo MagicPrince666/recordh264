@@ -3,30 +3,35 @@
 
 static int debug = 0;
 
-V4l2Video::V4l2Video() {}
+V4l2Video::V4l2Video(std::string device) : v4l2_device_(device)
+{
+}
+
 V4l2Video::~V4l2Video() {}
 
-int V4l2Video::InitVideoIn(struct vdIn *vd, char *device, int width, int height, int fps,
-                 int format, int grabmethod, char *avifilename)
+int V4l2Video::InitVideoIn(struct vdIn *vd, int width, int height, int fps,
+                           int format, int grabmethod)
 {
-    if (vd == NULL || device == NULL)
+    if (vd == NULL || v4l2_device_.empty()) {
         return -1;
-    if (width == 0 || height == 0)
+    }
+    if (width == 0 || height == 0) {
         return -1;
-    if (grabmethod < 0 || grabmethod > 1)
+    }
+    if (grabmethod < 0 || grabmethod > 1) {
         grabmethod = 1; // mmap by default;
+    }
     vd->videodevice = NULL;
     vd->status      = NULL;
     vd->pictName    = NULL;
     vd->videodevice = (char *)calloc(1, 16 * sizeof(char));
     vd->status      = (char *)calloc(1, 100 * sizeof(char));
     vd->pictName    = (char *)calloc(1, 80 * sizeof(char));
-    snprintf(vd->videodevice, 12, "%s", device);
+    snprintf(vd->videodevice, 12, "%s", v4l2_device_.c_str());
     printf("Device information:\n");
     printf("  Device path:  %s\n", vd->videodevice);
     vd->toggleAvi        = 0;
     vd->avifile          = NULL;
-    vd->avifilename      = avifilename;
     vd->recordtime       = 0;
     vd->framecount       = 0;
     vd->recordstart      = 0;
@@ -352,7 +357,7 @@ int V4l2Video::EnumFrameSizes(int dev, __u32 pixfmt)
             printf("{ discrete: width = %u, height = %u }\n",
                    fsize.discrete.width, fsize.discrete.height);
             ret = EnumFrameIntervals(dev, pixfmt,
-                                       fsize.discrete.width, fsize.discrete.height);
+                                     fsize.discrete.width, fsize.discrete.height);
             if (ret != 0)
                 printf("  Unable to enumerate frame sizes.\n");
         } else if (fsize.type == V4L2_FRMSIZE_TYPE_CONTINUOUS) {
