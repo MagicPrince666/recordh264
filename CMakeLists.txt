@@ -20,9 +20,10 @@ SET(CMAKE_CXX_FLAGS_RELEASE "$ENV{CXXFLAGS} -O3 -Wall")
 MESSAGE(STATUS ${CMAKE_SYSTEM_NAME})
 
 add_subdirectory(h264camera)
-# add_subdirectory(camera)
+add_subdirectory(camera)
 add_subdirectory(epoll)
 add_subdirectory(ringbuf)
+add_subdirectory(mjpg)
 
 set(EXEC_NAME Record_H264)
 
