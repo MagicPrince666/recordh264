@@ -30,7 +30,6 @@ MjpgRecord::~MjpgRecord()
         mjpg_cap_->VideoDisable();
         mjpg_cap_->CloseV4l2();
         delete mjpg_cap_;
-        delete video_;
     }
     if(avi_lib_) {
         delete avi_lib_;
@@ -39,11 +38,7 @@ MjpgRecord::~MjpgRecord()
 
 bool MjpgRecord::Init()
 {
-    int grabmethod = 1;
-    int fps        = 30;
-
-    video_               = new (std::nothrow) vdIn;
-    mjpg_cap_            = new (std::nothrow) V4l2Video(v4l2_device_, 1280, 720, fps, V4L2_PIX_FMT_MJPEG, grabmethod);
+    mjpg_cap_            = new (std::nothrow) V4l2Video(v4l2_device_, 1280, 720, 30, V4L2_PIX_FMT_MJPEG, 1);
     avi_lib_             = new (std::nothrow) AviLib(file_name_);
 
     if (mjpg_cap_->InitVideoIn() < 0) {
@@ -54,9 +49,11 @@ bool MjpgRecord::Init()
         exit(1);
     }
 
+    video_ = mjpg_cap_->GetV4l2Info();
+
     avi_lib_->AviOpenOutputFile();
 
-    avi_lib_->AviSetVideo(video_->width, video_->height, fps, (char *)"MJPG");
+    avi_lib_->AviSetVideo(video_->width, video_->height, video_->fps, (char *)"MJPG");
 
     cat_avi_thread_ = std::thread([](MjpgRecord *p_this) { p_this->VideoCapThread(); }, this);
     return true;

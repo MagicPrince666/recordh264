@@ -20,13 +20,29 @@ public:
     MjpgRecord(std::string device, std::string file_name);
     ~MjpgRecord();
 
+    /**
+     * @brief 初始化
+     * @return true 
+     * @return false 
+     */
     bool Init();
 
+    /**
+     * @brief 停止录制
+     */
     void StopCap();
 
 private:
+    /**
+     * @brief 抓取并保存视频
+     * @return true 
+     * @return false 
+     */
     bool CapAndSaveVideo();
 
+    /**
+     * @brief 视频获取线程
+     */
     void VideoCapThread();
 
 private:

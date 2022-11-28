@@ -51,13 +51,43 @@ public:
     V4l2Video(std::string device, int width, int height, int fps, int format, int grabmethod);
     ~V4l2Video();
 
+    /**
+     * @brief 初始化v4l2设备
+     * @return int 
+     */
     int InitVideoIn();
+
+    /**
+     * @brief 获取设备信息
+     * @return struct vdIn* 
+     */
+    struct vdIn *GetV4l2Info();
+
+    /**
+     * @brief 关闭v4l2设备
+     * @return int 
+     */
     int CloseV4l2();
+
+    /**
+     * @brief 开始视频
+     * @return int 
+     */
     int VideoEnable();
+
+    /**
+     * @brief 关闭视频
+     * @return int 
+     */
     int VideoDisable();
 
 private:
+    /**
+     * @brief 初始化v4l2
+     * @return int 
+     */
     int InitV4l2();
+
     /**
      * @brief 解除mmap映射
      * @return true

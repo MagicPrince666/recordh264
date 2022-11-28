@@ -242,6 +242,11 @@ int V4l2Video::InitV4l2()
     return 0;
 }
 
+struct vdIn *V4l2Video::GetV4l2Info()
+{
+    return video_;
+}
+
 int V4l2Video::VideoEnable()
 {
     int type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
