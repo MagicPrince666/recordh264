@@ -377,6 +377,7 @@ bool H264UvcCap::Init(void)
     cat_h264_thread_ = std::thread([](H264UvcCap *p_this) { p_this->VideoCapThread(); }, this);
 
     spdlog::info("-----Init H264 Camera {}-----", v4l2_device_);
+
     return true;
 }
 
@@ -482,8 +483,9 @@ void H264UvcCap::StopCap()
 
 void H264UvcCap::VideoCapThread()
 {
+    spdlog::info("{} start h264 captrue", __FUNCTION__);
     StartCap();
-    while (1) {
+    while (true) {
         if (!capturing_) {
             break;
         }

@@ -18,6 +18,7 @@ Epoll::Epoll(void)
     epfd_       = ::epoll_create(EPOLL_FD_SETSIZE);
 #endif
     assert(epfd_ >= 0);
+    listeners_.clear();
     epoll_loop_ = true;
 }
 

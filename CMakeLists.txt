@@ -7,7 +7,7 @@ include_directories(
     ${CMAKE_SOURCE_DIR}/include
 )
 
-PROJECT(RecordH264)
+PROJECT(RecordVideo)
 
 cmake_host_system_information(RESULT var QUERY OS_PLATFORM)
 message("processor platfrom: ${var}")

@@ -61,12 +61,16 @@ bool MjpgRecord::Init()
     spdlog::info("Start video Capture and saving {}", filename);
 
     cat_avi_thread_ = std::thread([](MjpgRecord *p_this) { p_this->VideoCapThread(); }, this);
+
     return true;
 }
 
 void MjpgRecord::VideoCapThread()
 {
-    MY_EPOLL.EpollAdd(video_->fd, std::bind(&MjpgRecord::CapAndSaveVideo, this));
+    spdlog::info("{} start mjpg captrue", __FUNCTION__);
+    if (!capturing_) {
+        MY_EPOLL.EpollAdd(video_->fd, std::bind(&MjpgRecord::CapAndSaveVideo, this));
+    }
     capturing_ = true;
     while (true) {
         if (!capturing_) {

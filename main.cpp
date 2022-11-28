@@ -8,6 +8,8 @@
  */
 
 #include <iostream>
+#include <thread>
+
 #include "spdlog/spdlog.h"
 #include "spdlog/cfg/env.h"  // support for loading levels from the environment variable
 #include "spdlog/fmt/ostr.h" // support for user defined types
@@ -31,7 +33,10 @@ int main (int argc, char **argv)
         return 1;
     }
 
-    spdlog::info("Use device {} with {}", dev, format);
+    spdlog::info("{} farmat = {}", dev, format);
+
+    std::thread video_cap_loop([]() { MY_EPOLL.EpollLoop(); });
+    video_cap_loop.detach();
 
     if(format == "h264") {
         // 硬件编码H264
@@ -50,7 +55,11 @@ int main (int argc, char **argv)
     }
 
     spdlog::info("Waitting data comming");
-    MY_EPOLL.EpollLoop();
+
+    while (true) {
+        sleep(1);
+    }
+    
 
     return 0; 
 }

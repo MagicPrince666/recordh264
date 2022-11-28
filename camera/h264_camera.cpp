@@ -147,6 +147,7 @@ void V4l2H264hData::RecordAndEncode()
 
 void V4l2H264hData::VideoEncodeThread()
 {
+    spdlog::info("{} start yuv captrue", __FUNCTION__);
     StartCap();
     while(1) {
         if (!b_running_) {
