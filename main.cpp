@@ -27,7 +27,7 @@ int main (int argc, char **argv)
         format = (char *)argv[2];
     } else {
         spdlog::error("Please Set video farmat");
-        spdlog::error("Eg:{} /dev/video0 h264", argv[0]);
+        spdlog::info("Eg:{} /dev/video0 h264", argv[0]);
         return 1;
     }
 
