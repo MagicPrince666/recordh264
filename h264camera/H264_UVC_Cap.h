@@ -115,6 +115,12 @@ private:
      */
     void VideoCapThread();
 
+    /**
+     * @brief 格式化时间
+     * @return std::string 
+     */
+    std::string getCurrentTime8();
+
 private:
     struct buffer {
         void *start;

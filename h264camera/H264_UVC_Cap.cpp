@@ -30,6 +30,9 @@
 #include <time.h>
 #include <unistd.h>
 
+#include <sstream>
+#include <iomanip>
+
 #include "H264_UVC_Cap.h"
 #include "epoll.h"
 #include "ringbuffer.h"
@@ -97,8 +100,8 @@ bool H264UvcCap::CreateFile(bool yes)
     if (!yes) { // 不创建文件
         return false;
     }
-    time_t tt        = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
-    std::string file = std::to_string(tt) + ".h264";
+
+    std::string file = getCurrentTime8() + ".h264";
     rec_fp1_         = fopen(file.c_str(), "wa+");
     if (rec_fp1_) {
         return true;
@@ -369,7 +372,7 @@ bool H264UvcCap::Init(void)
         }
     }
 
-    CreateFile(false);
+    CreateFile(true);
 
     cat_h264_thread_ = std::thread([](H264UvcCap *p_this) { p_this->VideoCapThread(); }, this);
 
@@ -486,4 +489,20 @@ void H264UvcCap::VideoCapThread()
         }
         std::this_thread::sleep_for(std::chrono::seconds(1));
     }
+}
+
+std::string H264UvcCap::getCurrentTime8()
+{
+    std::time_t result = std::time(nullptr) + 8 * 3600;
+    auto sec           = std::chrono::seconds(result);
+    std::chrono::time_point<std::chrono::system_clock> now(sec);
+    auto timet     = std::chrono::system_clock::to_time_t(now);
+    auto localTime = *std::gmtime(&timet);
+
+    std::stringstream ss;
+    std::string str;
+    ss << std::put_time(&localTime, "%Y_%m_%d_%H_%M_%S");
+    ss >> str;
+
+    return str;
 }
