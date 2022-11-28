@@ -119,7 +119,6 @@ int32_t V4l2Capture::InitVideoIn(struct vdIn *vd, char *device, int32_t width, i
     vd->status      = new (std::nothrow) int8_t[100 * sizeof(int8_t)];
     vd->pictName    = new (std::nothrow) int8_t[80 * sizeof(int8_t)];
     snprintf(vd->videodevice, 12, "%s", device);
-    vd->toggleAvi  = 0;
     vd->getPict    = 0;
     vd->signalquit = 1;
     vd->width      = width;

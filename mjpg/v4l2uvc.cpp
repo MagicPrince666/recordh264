@@ -31,24 +31,12 @@ int V4l2Video::InitVideoIn()
     }
 
     video_->videodevice = new (std::nothrow) char[16];
-    video_->status      = new (std::nothrow) char[100];
-    video_->pictName    =  new (std::nothrow) char[80];
+    video_->status      = new (std::nothrow) int8_t[100];
+    video_->pictName    =  new (std::nothrow) int8_t[80];
     snprintf(video_->videodevice, 12, "%s", v4l2_device_.c_str());
     printf("Device information:\n");
     printf("  Device path:  %s\n", video_->videodevice);
-    video_->toggleAvi        = 0;
-    video_->recordtime       = 0;
-    video_->framecount       = 0;
-    video_->recordstart      = 0;
-    video_->getPict          = 0;
-    video_->signalquit       = 1;
-    video_->fileCounter      = 0;
-    video_->rawFrameCapture  = 0;
-    video_->rfsBytesWritten  = 0;
-    video_->rfsFramesWritten = 0;
-    video_->captureFile      = nullptr;
-    video_->bytesWritten     = 0;
-    video_->framesWritten    = 0;
+
     if (InitV4l2() < 0) {
         printf(" Init v4L2 failed !! exit fatal\n");
         goto error;
@@ -284,8 +272,21 @@ int V4l2Video::VideoDisable()
     return 0;
 }
 
+bool V4l2Video::UninitMmap()
+{
+    for (uint32_t i = 0; i < NB_BUFFER; ++i) {
+        if (-1 == munmap(video_->mem[i], video_->buf.length)) {
+            perror("munmap");
+        }
+        video_->mem[i] = nullptr;
+    }
+
+    return true;
+}
+
 int V4l2Video::CloseV4l2()
 {
+    UninitMmap();
     if (video_->isstreaming) {
         VideoDisable();
     }

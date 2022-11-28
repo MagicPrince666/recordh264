@@ -27,41 +27,28 @@
 #define FOURCC_ARGS(c) (c) & 0xFF, ((c) >> 8) & 0xFF, ((c) >> 16) & 0xFF, ((c) >> 24) & 0xFF
 
 struct vdIn {
-    int fd;
+    int32_t fd;
     char *videodevice;
-    char *status;
-    char *pictName;
+    int8_t *status;
+    int8_t *pictName;
     struct v4l2_capability cap;
     struct v4l2_format fmt;
     struct v4l2_buffer buf;
     struct v4l2_requestbuffers rb;
     void *mem[NB_BUFFER];
-    unsigned char *tmpbuffer;
-    unsigned char *framebuffer;
-    int isstreaming;
-    int grabmethod;
-    int width;
-    int height;
-    int fps;
-    int formatIn;
-    int formatOut;
-    int framesizeIn;
-    int signalquit;
-    int toggleAvi;
-    int getPict;
-    int rawFrameCapture;
-    /* raw frame capture */
-    unsigned int fileCounter;
-    /* raw frame stream capture */
-    unsigned int rfsFramesWritten;
-    unsigned int rfsBytesWritten;
-    /* raw stream capture */
-    FILE *captureFile;
-    unsigned int framesWritten;
-    unsigned int bytesWritten;
-    int framecount;
-    int recordstart;
-    int recordtime;
+    uint8_t *tmpbuffer;
+    uint8_t *framebuffer;
+    int32_t isstreaming;
+    int32_t grabmethod;
+    uint32_t width;
+    uint32_t height;
+    uint32_t fps;
+    uint32_t formatIn;
+    uint32_t formatOut;
+    uint32_t framesizeIn;
+    uint32_t signalquit;
+    int32_t framecount;
+    uint32_t getPict;
 };
 
 class V4l2Video
@@ -77,6 +64,12 @@ public:
 
 private:
     int InitV4l2();
+    /**
+     * @brief 解除mmap映射
+     * @return true
+     * @return false
+     */
+    bool UninitMmap();
     int EnumFrameIntervals(int dev, __u32 pixfmt, __u32 width, __u32 height);
     int EnumFrameSizes(int dev, __u32 pixfmt);
     int EnumFrameFormats(int dev, unsigned int *supported_formats, unsigned int max_formats);

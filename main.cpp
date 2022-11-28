@@ -24,13 +24,10 @@ int main (int argc, char **argv)
 
     spdlog::info("Use device {}", dev);
 
-    MjpgRecord mjpg("test.avi");
-
+    MjpgRecord mjpg(dev, "test.avi");
     mjpg.Init();
 
-    while (1) {
-        MY_EPOLL.EpollLoop();
-    }
+    MY_EPOLL.EpollLoop();
 
     return 0; 
 }

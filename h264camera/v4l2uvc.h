@@ -49,11 +49,12 @@ struct vdIn {
     int32_t grabmethod;
     uint32_t width;
     uint32_t height;
+    int32_t fps;
     uint32_t formatIn;
     uint32_t formatOut;
     uint32_t framesizeIn;
     uint32_t signalquit;
-    uint32_t toggleAvi;
+    int32_t framecount;
     uint32_t getPict;
 };
 

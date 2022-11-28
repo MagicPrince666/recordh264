@@ -12,7 +12,9 @@
 #include "epoll.h"
 #include "mjpgrecord.h"
 
-MjpgRecord::MjpgRecord(std::string file_name) : file_name_(file_name)
+MjpgRecord::MjpgRecord(std::string device, std::string file_name) :
+v4l2_device_(device),
+file_name_(file_name)
 {
     mjpg_cap_  = nullptr;
     capturing_ = false;
@@ -30,6 +32,9 @@ MjpgRecord::~MjpgRecord()
         delete mjpg_cap_;
         delete video_;
     }
+    if(avi_lib_) {
+        delete avi_lib_;
+    }
 }
 
 bool MjpgRecord::Init()
@@ -38,7 +43,7 @@ bool MjpgRecord::Init()
     int fps        = 30;
 
     video_               = new (std::nothrow) vdIn;
-    mjpg_cap_            = new (std::nothrow) V4l2Video("/dev/video0", 1280, 720, fps, V4L2_PIX_FMT_MJPEG, grabmethod);
+    mjpg_cap_            = new (std::nothrow) V4l2Video(v4l2_device_, 1280, 720, fps, V4L2_PIX_FMT_MJPEG, grabmethod);
     avi_lib_             = new (std::nothrow) AviLib(file_name_);
 
     if (mjpg_cap_->InitVideoIn() < 0) {

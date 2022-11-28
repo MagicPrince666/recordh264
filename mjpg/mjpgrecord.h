@@ -17,7 +17,7 @@
 class MjpgRecord
 {
 public:
-    MjpgRecord(std::string file_name);
+    MjpgRecord(std::string device, std::string file_name);
     ~MjpgRecord();
 
     bool Init();
@@ -32,6 +32,7 @@ private:
 private:
     struct vdIn *video_;
     V4l2Video *mjpg_cap_;
+    std::string v4l2_device_;
     std::string file_name_;
     AviLib *avi_lib_;
     std::thread cat_avi_thread_;
