@@ -13,6 +13,7 @@
 #include "spdlog/fmt/ostr.h" // support for user defined types
 
 #include "mjpgrecord.h"
+#include "H264_UVC_Cap.h"
 #include "epoll.h"
 
 int main (int argc, char **argv) 
@@ -24,8 +25,13 @@ int main (int argc, char **argv)
 
     spdlog::info("Use device {}", dev);
 
+#if 1
     MjpgRecord mjpg(dev, "test.avi");
     mjpg.Init();
+#else
+    H264UvcCap h264(dev, 1280, 720);
+    h264.Init();
+#endif
 
     MY_EPOLL.EpollLoop();
 

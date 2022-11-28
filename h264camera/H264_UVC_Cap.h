@@ -13,33 +13,6 @@
 #include <iostream>
 #include <thread>
 
-#define NB_BUFFER 4
-
-struct vdIn {
-    int32_t fd;
-    char *videodevice;
-    int8_t *status;
-    int8_t *pictName;
-    struct v4l2_capability cap;
-    struct v4l2_format fmt;
-    struct v4l2_buffer buf;
-    struct v4l2_requestbuffers rb;
-    void *mem[NB_BUFFER];
-    uint8_t *tmpbuffer;
-    uint8_t *framebuffer;
-    int32_t isstreaming;
-    int32_t grabmethod;
-    uint32_t width;
-    uint32_t height;
-    int32_t fps;
-    uint32_t formatIn;
-    uint32_t formatOut;
-    uint32_t framesizeIn;
-    uint32_t signalquit;
-    int32_t framecount;
-    uint32_t getPict;
-};
-
 class H264UvcCap
 {
 public:
@@ -147,12 +120,21 @@ private:
         void *start;
         size_t length;
     };
-    struct buffer *buffers_;
+    struct vdIn {
+        int32_t fd;
+        struct v4l2_capability cap;
+        struct v4l2_format fmt;
+        struct v4l2_buffer buf;
+        uint32_t width = 1280;
+        uint32_t height = 720;
+        uint32_t fps = 30;
+        struct buffer *buffers;
+        uint32_t n_buffers = 0;
+    };
+
     struct vdIn *video_;
     H264XuCtrls *h264_xu_ctrls_;
-
     bool capturing_;
-    uint32_t n_buffers_;
     std::string v4l2_device_;
     uint32_t video_width_;
     uint32_t video_height_;
