@@ -15,7 +15,7 @@ typedef int ssize_t;
 
 AviLib::AviLib(std::string filename) : avi_file_name_(filename)
 {
-    Avi_errno_ = 0;
+    avi_errno_ = 0;
     avi_       = nullptr;
 }
 
@@ -82,7 +82,7 @@ int AviLib::AviAddChunk(unsigned char *tag, unsigned char *data, int length)
     if (AviWrite(avi_->fdes, (char *)c, 8) != 8 ||
         AviWrite(avi_->fdes, (char *)data, length) != (unsigned int)length) {
         lseek(avi_->fdes, avi_->pos, SEEK_SET);
-        Avi_errno_ = AVI_ERR_WRITE;
+        avi_errno_ = AVI_ERR_WRITE;
         return -1;
     }
 
@@ -103,7 +103,7 @@ int AviLib::AviAddIndexEntry(unsigned char *tag, long flags, unsigned long pos, 
         ptr = realloc((void *)avi_->idx, (avi_->max_idx + 4096) * 16);
 
         if (ptr == 0) {
-            Avi_errno_ = AVI_ERR_NO_MEM;
+            avi_errno_ = AVI_ERR_NO_MEM;
             return -1;
         }
         avi_->max_idx += 4096;
@@ -142,7 +142,7 @@ bool AviLib::AviOpenOutputFile()
 
     avi_ = new (std::nothrow) avi_t;
     if (!avi_) {
-        Avi_errno_ = AVI_ERR_NO_MEM;
+        avi_errno_ = AVI_ERR_NO_MEM;
         return false;
     }
     memset((void *)avi_, 0, sizeof(avi_t));
@@ -160,7 +160,7 @@ bool AviLib::AviOpenOutputFile()
     avi_->fdes = open(avi_file_name_.c_str(), O_RDWR | O_CREAT, (S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH) & ~mask);
 #endif
     if (avi_->fdes < 0) {
-        Avi_errno_ = AVI_ERR_OPEN;
+        avi_errno_ = AVI_ERR_OPEN;
         delete avi_;
         return false;
     }
@@ -174,7 +174,7 @@ bool AviLib::AviOpenOutputFile()
     i = AviWrite(avi_->fdes, (char *)AVI_header, HEADERBYTES);
     if (i != HEADERBYTES) {
         close(avi_->fdes);
-        Avi_errno_ = AVI_ERR_WRITE;
+        avi_errno_ = AVI_ERR_WRITE;
         delete avi_;
         return false;
     }
@@ -422,7 +422,7 @@ int AviLib::AviUpdateHeader()
     if (lseek(avi_->fdes, 0, SEEK_SET) < 0 ||
         AviWrite(avi_->fdes, (char *)AVI_header, HEADERBYTES) != HEADERBYTES ||
         lseek(avi_->fdes, avi_->pos, SEEK_SET) < 0) {
-        Avi_errno_ = AVI_ERR_CLOSE;
+        avi_errno_ = AVI_ERR_CLOSE;
         return -1;
     }
 
@@ -438,7 +438,7 @@ int AviLib::AviWriteData(char *data, unsigned long length, int audio, int keyfra
     /* Check for maximum file length */
 
     if ((avi_->pos + 8 + length + 8 + (avi_->n_idx + 1) * 16) > AVI_MAX_LEN) {
-        Avi_errno_ = AVI_ERR_SIZELIM;
+        avi_errno_ = AVI_ERR_SIZELIM;
         return -1;
     }
 
@@ -500,7 +500,7 @@ int AviLib::AviWriteFrame(char *data, long bytes, int keyframe)
     uint64_t pos;
 
     if (avi_->mode == AVI_MODE_READ) {
-        Avi_errno_ = AVI_ERR_NOT_PERM;
+        avi_errno_ = AVI_ERR_NOT_PERM;
         return -1;
     }
 

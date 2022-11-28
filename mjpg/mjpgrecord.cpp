@@ -1,7 +1,8 @@
-#include <new>
 #include <stdio.h>
 #include <string.h>
 #include <sys/ioctl.h>
+#include <thread>
+#include <new>
 
 #include "spdlog/spdlog.h"
 #include "spdlog/cfg/env.h"  // support for loading levels from the environment variable
@@ -63,7 +64,7 @@ void MjpgRecord::VideoCapThread()
         MY_EPOLL.EpollAdd(video_->fd, std::bind(&MjpgRecord::CapAndSaveVideo, this));
     }
     capturing_ = true;
-    while (1) {
+    while (true) {
         if (!capturing_) {
             break;
         }

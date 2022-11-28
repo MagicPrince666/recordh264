@@ -303,7 +303,7 @@ private:
 
     avi_t *avi_;
     char id_str_[MAX_INFO_STRLEN];
-    int64_t Avi_errno_;
+    int64_t avi_errno_;
     std::string avi_file_name_;
 
 private:
