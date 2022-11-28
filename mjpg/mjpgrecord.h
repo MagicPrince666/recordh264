@@ -17,7 +17,7 @@
 class MjpgRecord
 {
 public:
-    MjpgRecord(std::string device);
+    MjpgRecord(std::string device = "/dev/video0");
     ~MjpgRecord();
 
     /**
