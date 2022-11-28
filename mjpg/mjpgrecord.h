@@ -17,7 +17,7 @@
 class MjpgRecord
 {
 public:
-    MjpgRecord(std::string device, std::string file_name);
+    MjpgRecord(std::string device);
     ~MjpgRecord();
 
     /**
@@ -45,11 +45,16 @@ private:
      */
     void VideoCapThread();
 
+    /**
+     * @brief 时间戳
+     * @return std::string 
+     */
+    std::string getCurrentTime8();
+
 private:
     struct vdIn *video_;
-    V4l2Video *mjpg_cap_;
     std::string v4l2_device_;
-    std::string file_name_;
+    V4l2Video *mjpg_cap_;
     AviLib *avi_lib_;
     std::thread cat_avi_thread_;
     bool capturing_;

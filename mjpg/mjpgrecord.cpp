@@ -3,6 +3,8 @@
 #include <sys/ioctl.h>
 #include <thread>
 #include <new>
+#include <sstream>
+#include <iomanip>
 
 #include "spdlog/spdlog.h"
 #include "spdlog/cfg/env.h"  // support for loading levels from the environment variable
@@ -12,9 +14,8 @@
 #include "epoll.h"
 #include "mjpgrecord.h"
 
-MjpgRecord::MjpgRecord(std::string device, std::string file_name) :
-v4l2_device_(device),
-file_name_(file_name)
+MjpgRecord::MjpgRecord(std::string device) :
+v4l2_device_(device)
 {
     mjpg_cap_  = nullptr;
     capturing_ = false;
@@ -38,8 +39,9 @@ MjpgRecord::~MjpgRecord()
 
 bool MjpgRecord::Init()
 {
+    std::string filename = getCurrentTime8() + ".avi";
     mjpg_cap_            = new (std::nothrow) V4l2Video(v4l2_device_, 1280, 720, 30, V4L2_PIX_FMT_MJPEG, 1);
-    avi_lib_             = new (std::nothrow) AviLib(file_name_);
+    avi_lib_             = new (std::nothrow) AviLib(filename);
 
     if (mjpg_cap_->InitVideoIn() < 0) {
         exit(1);
@@ -104,4 +106,20 @@ void MjpgRecord::StopCap()
         MY_EPOLL.EpollDel(video_->fd);
     }
     capturing_ = false;
+}
+
+std::string MjpgRecord::getCurrentTime8()
+{
+    std::time_t result = std::time(nullptr) + 8 * 3600;
+    auto sec           = std::chrono::seconds(result);
+    std::chrono::time_point<std::chrono::system_clock> now(sec);
+    auto timet     = std::chrono::system_clock::to_time_t(now);
+    auto localTime = *std::gmtime(&timet);
+
+    std::stringstream ss;
+    std::string str;
+    ss << std::put_time(&localTime, "%Y_%m_%d_%H_%M_%S");
+    ss >> str;
+
+    return str;
 }

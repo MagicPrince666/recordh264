@@ -87,7 +87,7 @@ void V4l2H264hData::Init()
     h264_buf_ = new (std::nothrow) uint8_t[p_capture_->GetFrameLength()];
 #endif
 
-    InitFile(false); // 存储264文件
+    InitFile(true); // 存储264文件
 
     video_encode_thread_ = std::thread([](V4l2H264hData *p_this) { p_this->VideoEncodeThread(); }, this);
 

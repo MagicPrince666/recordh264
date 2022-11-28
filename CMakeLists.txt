@@ -35,6 +35,7 @@ target_link_libraries(${EXEC_NAME}
     h264camera
     mjpg
     camera
+    x264
     epoll
     ringbuf
     pthread
