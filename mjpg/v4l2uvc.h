@@ -21,34 +21,28 @@
 #include "avilib.h"
 
 #define NB_BUFFER 4
-#define DHT_SIZE 432
+
 #define ARRAY_SIZE(a) (sizeof(a) / sizeof((a)[0]))
 #define FOURCC_FORMAT "%c%c%c%c"
 #define FOURCC_ARGS(c) (c) & 0xFF, ((c) >> 8) & 0xFF, ((c) >> 16) & 0xFF, ((c) >> 24) & 0xFF
 
 struct vdIn {
-    int32_t fd;
-    char *videodevice;
-    int8_t *status;
-    int8_t *pictName;
+    int32_t fd = -1;
+    uint32_t width = 640;
+    uint32_t height = 480;
+    uint32_t fps = 30;
     struct v4l2_capability cap;
     struct v4l2_format fmt;
     struct v4l2_buffer buf;
     struct v4l2_requestbuffers rb;
     void *mem[NB_BUFFER];
-    uint8_t *tmpbuffer;
-    uint8_t *framebuffer;
+    uint8_t *tmpbuffer = nullptr;
+    uint8_t *framebuffer = nullptr;
     int32_t isstreaming;
     int32_t grabmethod;
-    uint32_t width;
-    uint32_t height;
-    uint32_t fps;
     uint32_t formatIn;
-    uint32_t formatOut;
     uint32_t framesizeIn;
-    uint32_t signalquit;
     int32_t framecount;
-    uint32_t getPict;
 };
 
 class V4l2Video

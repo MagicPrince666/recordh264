@@ -30,12 +30,8 @@ int V4l2Video::InitVideoIn()
         return -1;
     }
 
-    video_->videodevice = new (std::nothrow) char[16];
-    video_->status      = new (std::nothrow) int8_t[100];
-    video_->pictName    =  new (std::nothrow) int8_t[80];
-    snprintf(video_->videodevice, 12, "%s", v4l2_device_.c_str());
     printf("Device information:\n");
-    printf("  Device path:  %s\n", video_->videodevice);
+    printf("  Device path:  %s\n", v4l2_device_.c_str());
 
     if (InitV4l2() < 0) {
         printf(" Init v4L2 failed !! exit fatal\n");
@@ -64,9 +60,12 @@ int V4l2Video::InitVideoIn()
     }
     return 0;
 error:
-    delete[] video_->videodevice;
-    delete[] video_->status;
-    delete[] video_->pictName;
+    if (video_->tmpbuffer) {
+        delete[] video_->tmpbuffer;
+    }
+    if (video_->framebuffer) {
+        delete[] video_->framebuffer;
+    }
     close(video_->fd);
     return -1;
 }
@@ -76,7 +75,7 @@ int V4l2Video::InitV4l2()
     unsigned int i;
     int ret = 0;
 
-    if ((video_->fd = open(video_->videodevice, O_RDWR)) == -1) {
+    if ((video_->fd = open(v4l2_device_.c_str(), O_RDWR)) == -1) {
         perror("ERROR opening V4L interface");
         exit(1);
     }
@@ -84,23 +83,23 @@ int V4l2Video::InitV4l2()
     ret = ioctl(video_->fd, VIDIOC_QUERYCAP, &video_->cap);
     if (ret < 0) {
         printf("Error opening device %s: unable to query device.\n",
-               video_->videodevice);
+               v4l2_device_.c_str());
         return -1;
     }
 
     if ((video_->cap.capabilities & V4L2_CAP_VIDEO_CAPTURE) == 0) {
         printf("Error opening device %s: video capture not supported.\n",
-               video_->videodevice);
+               v4l2_device_.c_str());
         return -1;
     }
     if (video_->grabmethod) {
         if (!(video_->cap.capabilities & V4L2_CAP_STREAMING)) {
-            printf("%s does not support streaming i/o\n", video_->videodevice);
+            printf("%s does not support streaming i/o\n", v4l2_device_.c_str());
             return -1;
         }
     } else {
         if (!(video_->cap.capabilities & V4L2_CAP_READWRITE)) {
-            printf("%s does not support read i/o\n", video_->videodevice);
+            printf("%s does not support read i/o\n", v4l2_device_.c_str());
             return -1;
         }
     }
@@ -165,25 +164,24 @@ int V4l2Video::InitV4l2()
     }
 
     /* set framerate */
-    struct v4l2_streamparm *setfps;
-    setfps = (struct v4l2_streamparm *)calloc(1, sizeof(struct v4l2_streamparm));
-    memset(setfps, 0, sizeof(struct v4l2_streamparm));
-    setfps->type                                  = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-    setfps->parm.capture.timeperframe.numerator   = 1;
-    setfps->parm.capture.timeperframe.denominator = video_->fps;
-    ret                                           = ioctl(video_->fd, VIDIOC_S_PARM, setfps);
+    struct v4l2_streamparm setfps;
+    memset(&setfps, 0, sizeof(struct v4l2_streamparm));
+    setfps.type                                  = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+    setfps.parm.capture.timeperframe.numerator   = 1;
+    setfps.parm.capture.timeperframe.denominator = video_->fps;
+    ret                                           = ioctl(video_->fd, VIDIOC_S_PARM, &setfps);
     if (ret == -1) {
         perror("Unable to set frame rate");
         return -1;
     }
-    ret = ioctl(video_->fd, VIDIOC_G_PARM, setfps);
+    ret = ioctl(video_->fd, VIDIOC_G_PARM, &setfps);
     if (ret == 0) {
-        if (setfps->parm.capture.timeperframe.numerator != 1 ||
-            setfps->parm.capture.timeperframe.denominator != (unsigned int)(video_->fps)) {
+        if (setfps.parm.capture.timeperframe.numerator != 1 ||
+            setfps.parm.capture.timeperframe.denominator != (unsigned int)(video_->fps)) {
             printf("  Frame rate:   %u/%u fps (requested frame rate %u fps is "
                    "not supported by device)\n",
-                   setfps->parm.capture.timeperframe.denominator,
-                   setfps->parm.capture.timeperframe.numerator,
+                   setfps.parm.capture.timeperframe.denominator,
+                   setfps.parm.capture.timeperframe.numerator,
                    video_->fps);
         } else {
             printf("  Frame rate:   %d fps\n", video_->fps);
@@ -286,10 +284,8 @@ bool V4l2Video::UninitMmap()
 
 int V4l2Video::CloseV4l2()
 {
+    VideoDisable();
     UninitMmap();
-    if (video_->isstreaming) {
-        VideoDisable();
-    }
     if (video_->tmpbuffer) {
         delete[] video_->tmpbuffer;
         video_->tmpbuffer = nullptr;
@@ -297,21 +293,6 @@ int V4l2Video::CloseV4l2()
     if(video_->framebuffer) {
         delete[] video_->framebuffer;
         video_->framebuffer = nullptr;
-    }
-
-    if(video_->videodevice) {
-        delete[] video_->videodevice;
-        video_->videodevice = nullptr;
-    }
-
-    if(video_->status) {
-        delete[] video_->status;
-        video_->status = nullptr;
-    }
-
-    if(video_->pictName) {
-        delete[] video_->pictName;
-        video_->pictName = nullptr;
     }
 
     return 0;
