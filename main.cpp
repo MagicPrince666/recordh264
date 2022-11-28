@@ -45,8 +45,11 @@ int main (int argc, char **argv)
         // 软件编码H264
         V4l2H264hData sh264(dev);
         sh264.Init();
+    } else {
+        spdlog::error("Not support farmat");
     }
 
+    spdlog::info("Waitting data comming");
     MY_EPOLL.EpollLoop();
 
     return 0; 

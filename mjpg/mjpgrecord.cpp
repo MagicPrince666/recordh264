@@ -55,6 +55,7 @@ bool MjpgRecord::Init()
 
     avi_lib_->AviOpenOutputFile();
 
+    spdlog::info("fd {} width {} height {} fps {}", video_->fd, video_->width, video_->height, video_->fps);
     avi_lib_->AviSetVideo(video_->width, video_->height, video_->fps, (char *)"MJPG");
 
     spdlog::info("Start video Capture and saving {}", filename);
@@ -86,7 +87,7 @@ bool MjpgRecord::CapAndSaveVideo()
         exit(1);
     }
 
-    spdlog::info("{} fd = {}", __FUNCTION__, video_->fd);
+    // spdlog::info("{} fd = {}", __FUNCTION__, video_->fd);
     memcpy(video_->tmpbuffer, video_->mem[video_->buf.index], video_->buf.bytesused);
 
     avi_lib_->AviWriteFrame((char *)(video_->tmpbuffer), video_->buf.bytesused, video_->framecount);
