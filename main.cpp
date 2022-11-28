@@ -54,12 +54,9 @@ int main (int argc, char **argv)
         spdlog::error("Not support farmat");
     }
 
-    spdlog::info("Waitting data comming");
-
     while (true) {
         sleep(1);
     }
-    
 
     return 0; 
 }
