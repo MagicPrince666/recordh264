@@ -39,5 +39,6 @@ target_link_libraries(${EXEC_NAME}
     epoll
     ringbuf
     pthread
+    dl
 )
 
