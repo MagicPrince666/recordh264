@@ -242,17 +242,16 @@ struct Camera *V4l2VideoCapture::GetFormat()
 bool V4l2VideoCapture::EnumV4l2Format()
 {
     /* 查询打开的设备是否属于摄像头：设备video不一定是摄像头*/
-    struct v4l2_capability cap;
-    int32_t ret = ioctl(camera_.fd, VIDIOC_QUERYCAP, &cap);
+    int32_t ret = ioctl(camera_.fd, VIDIOC_QUERYCAP, &camera_.v4l2_cap);
     if (-1 == ret) {
         perror("ioctl VIDIOC_QUERYCAP");
         return false;
     }
-    if (cap.capabilities & V4L2_CAP_VIDEO_CAPTURE) {
+    if (camera_.v4l2_cap.capabilities & V4L2_CAP_VIDEO_CAPTURE) {
         /* 如果为摄像头设备则打印摄像头驱动名字 */
-        spdlog::info("Driver    Name: {}", (char*)cap.driver);
+        spdlog::info("Driver    Name: {}", (char*)camera_.v4l2_cap.driver);
     } else {
-        spdlog::info("open file is not video");
+        spdlog::error("open file is not video");
         return false;
     }
 
