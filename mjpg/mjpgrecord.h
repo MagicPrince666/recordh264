@@ -51,13 +51,6 @@ private:
      */
     std::string getCurrentTime8();
 
-    /**
-     * @brief 查看摄像头支持格式
-     * @return true
-     * @return false
-     */
-    bool EnumV4l2Format();
-
 private:
     struct vdIn *video_;
     std::string v4l2_device_;

@@ -94,6 +94,14 @@ private:
      * @return false
      */
     bool UninitMmap();
+
+    /**
+     * @brief 查看摄像头支持格式
+     * @return true
+     * @return false
+     */
+    bool EnumV4l2Format();
+
     int32_t EnumFrameIntervals(int32_t dev, uint32_t pixfmt, uint32_t width, uint32_t height);
     int32_t EnumFrameSizes(int32_t dev, uint32_t pixfmt);
     int32_t EnumFrameFormats(int32_t dev, uint32_t *supported_formats, uint32_t max_formats);

@@ -76,6 +76,25 @@ $ cd build
 $ cmake -DCMAKE_TOOLCHAIN_FILE=cmake/build_for_darwin.cmake ..
 ```
 
+### 编译x264
+```
+$ git clone https://code.videolan.org/videolan/x264.git
+$ ./configure --host=arm-linux --disable-asm --prefix=$PWD/install 
+```
+
+编辑config.mak
+CC=/home/ubuntu/toolchain-sunxi-musl/toolchain/bin/arm-openwrt-linux-muslgnueabi-gcc \
+LD=/home/ubuntu/toolchain-sunxi-musl/toolchain/bin/arm-openwrt-linux-muslgnueabi-gcc \
+AR=/home/ubuntu/toolchain-sunxi-musl/toolchain/bin/arm-openwrt-linux-muslgnueabi-ar \
+RAMLIB=/home/ubuntu/toolchain-sunxi-musl/toolchain/bin/arm-openwrt-linux-muslgnueabi-ranlib
+
+拷贝文件
+```
+$ cp libx264.a ../librtsp/v4l2demo/x264/
+$ cp x264.h ../librtsp/v4l2demo/x264/
+$ cp x264_config.h ../librtsp/v4l2demo/x264/
+```
+
 ### 获取摄像头信息
 ```
 $ v4l2-ctl --list-devices

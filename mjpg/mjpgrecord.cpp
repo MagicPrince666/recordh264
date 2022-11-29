@@ -46,8 +46,6 @@ bool MjpgRecord::Init()
         exit(1);
     }
 
-    EnumV4l2Format();
-
     if (mjpg_cap_->VideoEnable() < 0) {
         exit(1);
     }
@@ -63,52 +61,6 @@ bool MjpgRecord::Init()
 
     cat_avi_thread_ = std::thread([](MjpgRecord *p_this) { p_this->VideoCapThread(); }, this);
 
-    return true;
-}
-
-bool MjpgRecord::EnumV4l2Format()
-{
-    /* 查询打开的设备是否属于摄像头：设备video不一定是摄像头*/
-    int32_t ret = ioctl(video_->fd, VIDIOC_QUERYCAP, &video_->cap);
-    if (-1 == ret) {
-        perror("ioctl VIDIOC_QUERYCAP");
-        return false;
-    }
-    if (video_->cap.capabilities & V4L2_CAP_VIDEO_CAPTURE) {
-        /* 如果为摄像头设备则打印摄像头驱动名字 */
-        spdlog::info("Driver    Name: {}", (char *)video_->cap.driver);
-    } else {
-        spdlog::error("open file is not video");
-        return false;
-    }
-
-    /* 查询摄像头可捕捉的图片类型，VIDIOC_ENUM_FMT: 枚举摄像头帧格式 */
-    struct v4l2_fmtdesc fmt;
-    fmt.type = V4L2_BUF_TYPE_VIDEO_CAPTURE; // 指定需要枚举的类型
-    for (uint32_t i = 0;; i++) {            // 有可能摄像头支持的图片格式不止一种
-        fmt.index = i;
-        ret       = ioctl(video_->fd, VIDIOC_ENUM_FMT, &fmt);
-        if (-1 == ret) { // 获取所有格式完成
-            break;
-        }
-
-        /* 打印摄像头图片格式 */
-        spdlog::info("Format: {}", (char *)fmt.description);
-
-        /* 查询该图像格式所支持的分辨率 */
-        struct v4l2_frmsizeenum frmsize;
-        frmsize.pixel_format = fmt.pixelformat;
-        for (uint32_t j = 0;; j++) { //　该格式支持分辨率不止一种
-            frmsize.index = j;
-            ret           = ioctl(video_->fd, VIDIOC_ENUM_FRAMESIZES, &frmsize);
-            if (-1 == ret) { // 获取所有图片分辨率完成
-                break;
-            }
-
-            /* 打印图片分辨率 */
-            spdlog::info("Framsize: {}x{}", frmsize.discrete.width, frmsize.discrete.height);
-        }
-    }
     return true;
 }
 

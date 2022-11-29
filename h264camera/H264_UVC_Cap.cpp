@@ -36,6 +36,7 @@
 #include "H264_UVC_Cap.h"
 #include "epoll.h"
 #include "ringbuffer.h"
+
 #include "spdlog/cfg/env.h"  // support for loading levels from the environment variable
 #include "spdlog/fmt/ostr.h" // support for user defined types
 #include "spdlog/spdlog.h"
