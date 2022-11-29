@@ -75,7 +75,7 @@ bool V4l2VideoCapture::OpenCamera()
 
 bool V4l2VideoCapture::CloseCamera()
 {
-    if(camera_.fd <= 0) {
+    if (camera_.fd <= 0) {
         spdlog::error("{} fd = {}", __FUNCTION__, camera_.fd);
         return false;
     }
@@ -239,9 +239,56 @@ struct Camera *V4l2VideoCapture::GetFormat()
     return &camera_;
 }
 
+bool V4l2VideoCapture::EnumFormat()
+{
+    /* 查询打开的设备是否属于摄像头：设备video不一定是摄像头*/
+    struct v4l2_capability cap;
+    int32_t ret = ioctl(camera_.fd, VIDIOC_QUERYCAP, &cap);
+    if (-1 == ret) {
+        perror("ioctl VIDIOC_QUERYCAP");
+        return false;
+    }
+    if (cap.capabilities & V4L2_CAP_VIDEO_CAPTURE) {
+        /* 如果为摄像头设备则打印摄像头驱动名字 */
+        spdlog::info("Driver    Name: {}", cap.driver);
+    } else {
+        spdlog::info("open file is not video");
+        return false;
+    }
+
+    /* 查询摄像头可捕捉的图片类型，VIDIOC_ENUM_FMT: 枚举摄像头帧格式 */
+    struct v4l2_fmtdesc fmt;
+    fmt.type = V4L2_BUF_TYPE_VIDEO_CAPTURE; // 指定需要枚举的类型
+    for (uint32_t i = 0;; i++) {                      // 有可能摄像头支持的图片格式不止一种
+        fmt.index = i;
+        ret       = ioctl(camera_.fd, VIDIOC_ENUM_FMT, &fmt);
+        if (-1 == ret) { // 获取所有格式完成
+            break;
+        }
+
+        /* 打印摄像头图片格式 */
+        spdlog::info("Picture Format: {}", (char*)fmt.description);
+
+        /* 查询该图像格式所支持的分辨率 */
+        struct v4l2_frmsizeenum frmsize;
+        frmsize.pixel_format = fmt.pixelformat;
+        for (uint32_t j = 0;; j++) { //　该格式支持分辨率不止一种
+            frmsize.index = j;
+            ret           = ioctl(camera_.fd, VIDIOC_ENUM_FRAMESIZES, &frmsize);
+            if (-1 == ret) {// 获取所有图片分辨率完成
+                break;
+            }
+
+            /* 打印图片分辨率 */
+            spdlog::info("width: {} height: {}", frmsize.discrete.width, frmsize.discrete.height);
+        }
+    }
+    return true;
+}
+
 bool V4l2VideoCapture::InitCamera()
 {
-    if(camera_.fd <= 0) {
+    if (camera_.fd <= 0) {
         spdlog::error("Device = {} fd = {} not init", v4l2_device_, camera_.fd);
         return false;
     }
@@ -273,8 +320,8 @@ bool V4l2VideoCapture::InitCamera()
 
     struct v4l2_streamparm parm;
     memset(&parm, 0, sizeof(struct v4l2_streamparm));
-    parm.type                     = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-    parm.parm.capture.capturemode = V4L2_MODE_HIGHQUALITY;
+    parm.type                                  = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+    parm.parm.capture.capturemode              = V4L2_MODE_HIGHQUALITY;
     parm.parm.capture.timeperframe.denominator = camera_.fps; //时间间隔分母
     parm.parm.capture.timeperframe.numerator   = 1;           //分子
     if (-1 == ioctl(camera_.fd, VIDIOC_S_PARM, &parm)) {

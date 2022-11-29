@@ -103,6 +103,13 @@ private:
      */
     bool InitMmap();
 
+    /**
+     * @brief 枚举支持格式
+     * @return true 
+     * @return false 
+     */
+    bool EnumFormat();
+
     void ErrnoExit(const char *s);
     int32_t xioctl(int32_t fd, int32_t request, void *arg);
 
