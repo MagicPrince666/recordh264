@@ -35,6 +35,8 @@ int main (int argc, char **argv)
 
     spdlog::info("{} farmat = {}", dev, format);
 
+    spdlog::info("chip hardware concurrency {} !", std::thread::hardware_concurrency());
+
     std::thread video_cap_loop([]() { MY_EPOLL.EpollLoop(); });
     video_cap_loop.detach();
 

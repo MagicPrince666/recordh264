@@ -239,7 +239,7 @@ struct Camera *V4l2VideoCapture::GetFormat()
     return &camera_;
 }
 
-bool V4l2VideoCapture::EnumFormat()
+bool V4l2VideoCapture::EnumV4l2Format()
 {
     /* 查询打开的设备是否属于摄像头：设备video不一定是摄像头*/
     struct v4l2_capability cap;
@@ -250,7 +250,7 @@ bool V4l2VideoCapture::EnumFormat()
     }
     if (cap.capabilities & V4L2_CAP_VIDEO_CAPTURE) {
         /* 如果为摄像头设备则打印摄像头驱动名字 */
-        spdlog::info("Driver    Name: {}", cap.driver);
+        spdlog::info("Driver    Name: {}", (char*)cap.driver);
     } else {
         spdlog::info("open file is not video");
         return false;
@@ -346,6 +346,7 @@ bool V4l2VideoCapture::Init()
 {
     bool ret = false;
     ret |= OpenCamera();
+    ret |= EnumV4l2Format();
     ret |= InitCamera();
     ret |= StartPreviewing();
     return ret;

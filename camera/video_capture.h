@@ -108,7 +108,7 @@ private:
      * @return true 
      * @return false 
      */
-    bool EnumFormat();
+    bool EnumV4l2Format();
 
     void ErrnoExit(const char *s);
     int32_t xioctl(int32_t fd, int32_t request, void *arg);
