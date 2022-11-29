@@ -11,7 +11,7 @@ include_directories(${CMAKE_SOURCE_DIR}/x264)
 # x264库路径
 link_directories(${CMAKE_SOURCE_DIR}/x264)
 
-# 工具链地址
+# 工具链地址 仅支持c++11
 SET(TOOLCHAIN_DIR  "/home/leo/toolchain-sunxi-musl/toolchain/bin/")
 
 # sunxi v831
