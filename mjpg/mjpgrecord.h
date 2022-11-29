@@ -8,8 +8,8 @@
  */
 #pragma once
 
-#include "v4l2uvc.h"
 #include "avilib.h"
+#include "v4l2uvc.h"
 
 #include <iostream>
 #include <thread>
@@ -22,8 +22,8 @@ public:
 
     /**
      * @brief 初始化
-     * @return true 
-     * @return false 
+     * @return true
+     * @return false
      */
     bool Init();
 
@@ -35,8 +35,8 @@ public:
 private:
     /**
      * @brief 抓取并保存视频
-     * @return true 
-     * @return false 
+     * @return true
+     * @return false
      */
     bool CapAndSaveVideo();
 
@@ -47,9 +47,16 @@ private:
 
     /**
      * @brief 时间戳
-     * @return std::string 
+     * @return std::string
      */
     std::string getCurrentTime8();
+
+    /**
+     * @brief 查看摄像头支持格式
+     * @return true
+     * @return false
+     */
+    bool EnumV4l2Format();
 
 private:
     struct vdIn *video_;

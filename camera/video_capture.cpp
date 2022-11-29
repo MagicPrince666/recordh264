@@ -266,7 +266,7 @@ bool V4l2VideoCapture::EnumV4l2Format()
         }
 
         /* 打印摄像头图片格式 */
-        spdlog::info("Picture Format: {}", (char*)fmt.description);
+        spdlog::info("Format: {}", (char*)fmt.description);
 
         /* 查询该图像格式所支持的分辨率 */
         struct v4l2_frmsizeenum frmsize;
@@ -279,7 +279,7 @@ bool V4l2VideoCapture::EnumV4l2Format()
             }
 
             /* 打印图片分辨率 */
-            spdlog::info("width: {} height: {}", frmsize.discrete.width, frmsize.discrete.height);
+            spdlog::info("Framsize: {}x{}", frmsize.discrete.width, frmsize.discrete.height);
         }
     }
     return true;

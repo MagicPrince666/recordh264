@@ -27,16 +27,16 @@
 #define FOURCC_ARGS(c) (c) & 0xFF, ((c) >> 8) & 0xFF, ((c) >> 16) & 0xFF, ((c) >> 24) & 0xFF
 
 struct vdIn {
-    int32_t fd = -1;
-    uint32_t width = 640;
+    int32_t fd      = -1;
+    uint32_t width  = 640;
     uint32_t height = 480;
-    uint32_t fps = 30;
+    uint32_t fps    = 30;
     struct v4l2_capability cap;
     struct v4l2_format fmt;
     struct v4l2_buffer buf;
     struct v4l2_requestbuffers rb;
     void *mem[NB_BUFFER];
-    uint8_t *tmpbuffer = nullptr;
+    uint8_t *tmpbuffer   = nullptr;
     uint8_t *framebuffer = nullptr;
     int32_t isstreaming;
     int32_t grabmethod;
@@ -48,45 +48,45 @@ struct vdIn {
 class V4l2Video
 {
 public:
-    V4l2Video(std::string device, int width, int height, int fps, int format, int grabmethod);
+    V4l2Video(std::string device, int32_t width, int32_t height, int32_t fps, int32_t format, int32_t grabmethod);
     ~V4l2Video();
 
     /**
      * @brief 初始化v4l2设备
-     * @return int 
+     * @return int32_t
      */
-    int InitVideoIn();
+    int32_t InitVideoIn();
 
     /**
      * @brief 获取设备信息
-     * @return struct vdIn* 
+     * @return struct vdIn*
      */
     struct vdIn *GetV4l2Info();
 
     /**
      * @brief 关闭v4l2设备
-     * @return int 
+     * @return int32_t
      */
-    int CloseV4l2();
+    int32_t CloseV4l2();
 
     /**
      * @brief 开始视频
-     * @return int 
+     * @return int32_t
      */
-    int VideoEnable();
+    int32_t VideoEnable();
 
     /**
      * @brief 关闭视频
-     * @return int 
+     * @return int32_t
      */
-    int VideoDisable();
+    int32_t VideoDisable();
 
 private:
     /**
      * @brief 初始化v4l2
-     * @return int 
+     * @return int32_t
      */
-    int InitV4l2();
+    int32_t InitV4l2();
 
     /**
      * @brief 解除mmap映射
@@ -94,11 +94,12 @@ private:
      * @return false
      */
     bool UninitMmap();
-    int EnumFrameIntervals(int dev, __u32 pixfmt, __u32 width, __u32 height);
-    int EnumFrameSizes(int dev, __u32 pixfmt);
-    int EnumFrameFormats(int dev, unsigned int *supported_formats, unsigned int max_formats);
+    int32_t EnumFrameIntervals(int32_t dev, uint32_t pixfmt, uint32_t width, uint32_t height);
+    int32_t EnumFrameSizes(int32_t dev, uint32_t pixfmt);
+    int32_t EnumFrameFormats(int32_t dev, uint32_t *supported_formats, uint32_t max_formats);
 
 private:
     struct vdIn *video_;
     std::string v4l2_device_;
+    int32_t debug_;
 };

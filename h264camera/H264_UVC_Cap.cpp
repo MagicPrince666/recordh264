@@ -30,8 +30,8 @@
 #include <time.h>
 #include <unistd.h>
 
-#include <sstream>
 #include <iomanip>
+#include <sstream>
 
 #include "H264_UVC_Cap.h"
 #include "epoll.h"
@@ -135,6 +135,52 @@ bool H264UvcCap::OpenDevice()
     return true;
 }
 
+bool H264UvcCap::EnumV4l2Format()
+{
+    /* 查询打开的设备是否属于摄像头：设备video不一定是摄像头*/
+    int32_t ret = ioctl(video_->fd, VIDIOC_QUERYCAP, &video_->cap);
+    if (-1 == ret) {
+        perror("ioctl VIDIOC_QUERYCAP");
+        return false;
+    }
+    if (video_->cap.capabilities & V4L2_CAP_VIDEO_CAPTURE) {
+        /* 如果为摄像头设备则打印摄像头驱动名字 */
+        spdlog::info("Driver    Name: {}", (char *)video_->cap.driver);
+    } else {
+        spdlog::error("open file is not video");
+        return false;
+    }
+
+    /* 查询摄像头可捕捉的图片类型，VIDIOC_ENUM_FMT: 枚举摄像头帧格式 */
+    struct v4l2_fmtdesc fmt;
+    fmt.type = V4L2_BUF_TYPE_VIDEO_CAPTURE; // 指定需要枚举的类型
+    for (uint32_t i = 0;; i++) {            // 有可能摄像头支持的图片格式不止一种
+        fmt.index = i;
+        ret       = ioctl(video_->fd, VIDIOC_ENUM_FMT, &fmt);
+        if (-1 == ret) { // 获取所有格式完成
+            break;
+        }
+
+        /* 打印摄像头图片格式 */
+        spdlog::info("Format: {}", (char *)fmt.description);
+
+        /* 查询该图像格式所支持的分辨率 */
+        struct v4l2_frmsizeenum frmsize;
+        frmsize.pixel_format = fmt.pixelformat;
+        for (uint32_t j = 0;; j++) { //　该格式支持分辨率不止一种
+            frmsize.index = j;
+            ret           = ioctl(video_->fd, VIDIOC_ENUM_FRAMESIZES, &frmsize);
+            if (-1 == ret) { // 获取所有图片分辨率完成
+                break;
+            }
+
+            /* 打印图片分辨率 */
+            spdlog::info("Framsize: {}x{}", frmsize.discrete.width, frmsize.discrete.height);
+        }
+    }
+    return true;
+}
+
 int32_t H264UvcCap::InitMmap(void)
 {
     spdlog::info("Init mmap");
@@ -213,13 +259,9 @@ bool H264UvcCap::UninitMmap()
 int32_t H264UvcCap::InitDevice(int32_t width, int32_t height, int32_t format)
 {
     spdlog::info("{} width = {} height = {} format = {}", __FUNCTION__, width, height, format);
-    struct v4l2_capability cap;
-    struct v4l2_cropcap cropcap;
-    struct v4l2_crop crop;
-    struct v4l2_format fmt;
     uint32_t min;
 
-    if (-1 == xioctl(video_->fd, VIDIOC_QUERYCAP, &cap)) {
+    if (-1 == xioctl(video_->fd, VIDIOC_QUERYCAP, &video_->cap)) {
         if (EINVAL == errno) {
             spdlog::error("{} is not a V4L2 device", v4l2_device_);
             return -1;
@@ -228,26 +270,24 @@ int32_t H264UvcCap::InitDevice(int32_t width, int32_t height, int32_t format)
         }
     }
 
-    if (!(cap.capabilities & V4L2_CAP_VIDEO_CAPTURE)) {
+    if (!(video_->cap.capabilities & V4L2_CAP_VIDEO_CAPTURE)) {
         spdlog::error("{} is no video capture device", v4l2_device_);
         return -1;
     }
 
-    if (!(cap.capabilities & V4L2_CAP_STREAMING)) {
+    if (!(video_->cap.capabilities & V4L2_CAP_STREAMING)) {
         spdlog::error("{} does not support streaming i/o", v4l2_device_);
         return -1;
     }
 
-    video_->cap = cap;
+    CLEAR(video_->cropcap);
+    video_->cropcap.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 
-    CLEAR(cropcap);
-    cropcap.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+    if (0 == xioctl(video_->fd, VIDIOC_CROPCAP, &video_->cropcap)) {
+        video_->crop.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+        video_->crop.c    = video_->cropcap.defrect;
 
-    if (0 == xioctl(video_->fd, VIDIOC_CROPCAP, &cropcap)) {
-        crop.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-        crop.c    = cropcap.defrect;
-
-        if (-1 == xioctl(video_->fd, VIDIOC_S_CROP, &crop)) {
+        if (-1 == xioctl(video_->fd, VIDIOC_S_CROP, &video_->crop)) {
             switch (errno) {
             case EINVAL:
                 break;
@@ -257,29 +297,27 @@ int32_t H264UvcCap::InitDevice(int32_t width, int32_t height, int32_t format)
         }
     }
 
-    CLEAR(fmt);
+    CLEAR(video_->fmt);
 
-    fmt.type                = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-    fmt.fmt.pix.width       = width;
-    fmt.fmt.pix.height      = height;
-    fmt.fmt.pix.pixelformat = format;
-    fmt.fmt.pix.field       = V4L2_FIELD_ANY;
+    video_->fmt.type                = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+    video_->fmt.fmt.pix.width       = width;
+    video_->fmt.fmt.pix.height      = height;
+    video_->fmt.fmt.pix.pixelformat = format;
+    video_->fmt.fmt.pix.field       = V4L2_FIELD_ANY;
 
-    if (-1 == xioctl(video_->fd, VIDIOC_S_FMT, &fmt)) {
+    if (-1 == xioctl(video_->fd, VIDIOC_S_FMT, &video_->fmt)) {
         return errnoexit("VIDIOC_S_FMT");
     }
 
-    min = fmt.fmt.pix.width * 2;
+    min = video_->fmt.fmt.pix.width * 2;
 
-    if (fmt.fmt.pix.bytesperline < min) {
-        fmt.fmt.pix.bytesperline = min;
+    if (video_->fmt.fmt.pix.bytesperline < min) {
+        video_->fmt.fmt.pix.bytesperline = min;
     }
-    min = fmt.fmt.pix.bytesperline * fmt.fmt.pix.height;
-    if (fmt.fmt.pix.sizeimage < min) {
-        fmt.fmt.pix.sizeimage = min;
+    min = video_->fmt.fmt.pix.bytesperline * video_->fmt.fmt.pix.height;
+    if (video_->fmt.fmt.pix.sizeimage < min) {
+        video_->fmt.fmt.pix.sizeimage = min;
     }
-
-    video_->fmt = fmt;
 
     struct v4l2_streamparm parm;
     memset(&parm, 0, sizeof parm);
@@ -340,6 +378,8 @@ bool H264UvcCap::Init(void)
     if (InitDevice(video_width_, video_height_, format) < 0) {
         return false;
     }
+
+    EnumV4l2Format();
 
     StartPreviewing();
 
