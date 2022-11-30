@@ -13,14 +13,12 @@
 #include <stdint.h>
 #include <iostream>
 
-#include "h264encoder.h"
-
 struct Buffer {
     void *start;
     size_t length;
 };
 
-struct Camera {
+struct Nv12Camera {
     int32_t fd = -1;
     int32_t width = 640;
     int32_t height = 480;
@@ -32,11 +30,11 @@ struct Camera {
     struct Buffer *buffers;
 };
 
-class V4l2VideoCapture
+class Nv12VideoCap
 {
 public:
-    V4l2VideoCapture(std::string dev = "/dev/video0");
-    ~V4l2VideoCapture();
+    Nv12VideoCap(std::string dev = "/dev/video0");
+    ~Nv12VideoCap();
 
     /**
      * @brief 初始化
@@ -60,7 +58,7 @@ public:
     /**
      * 获取视频格式
     */
-    struct Camera* GetFormat();
+    struct Nv12Camera* GetFormat();
 
 private:
     /**
@@ -116,5 +114,5 @@ private:
 private:
     std::string v4l2_device_;
     uint32_t n_buffers_;
-    struct Camera camera_;
+    struct Nv12Camera camera_;
 };

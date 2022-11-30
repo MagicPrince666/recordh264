@@ -19,27 +19,27 @@
 #include "spdlog/fmt/ostr.h" // support for user defined types
 #include "spdlog/spdlog.h"
 
-#include "video_capture.h"
+#include "nv12_capture.h"
 
 #define CLEAR(x) memset(&(x), 0, sizeof(x))
 
-V4l2VideoCapture::V4l2VideoCapture(std::string dev)
+Nv12VideoCap::Nv12VideoCap(std::string dev)
     : v4l2_device_(dev)
 {
 }
 
-V4l2VideoCapture::~V4l2VideoCapture()
+Nv12VideoCap::~Nv12VideoCap()
 {
     V4l2Close();
 }
 
-void V4l2VideoCapture::ErrnoExit(const char *s)
+void Nv12VideoCap::ErrnoExit(const char *s)
 {
     spdlog::error("{} error {}, {}", s, errno, strerror(errno));
     exit(EXIT_FAILURE);
 }
 
-int32_t V4l2VideoCapture::xioctl(int32_t fd, int32_t request, void *arg)
+int32_t Nv12VideoCap::xioctl(int32_t fd, int32_t request, void *arg)
 {
     int32_t r = 0;
     do {
@@ -49,7 +49,7 @@ int32_t V4l2VideoCapture::xioctl(int32_t fd, int32_t request, void *arg)
     return r;
 }
 
-bool V4l2VideoCapture::OpenCamera()
+bool Nv12VideoCap::OpenCamera()
 {
     struct stat st;
 
@@ -73,7 +73,7 @@ bool V4l2VideoCapture::OpenCamera()
     return true;
 }
 
-bool V4l2VideoCapture::CloseCamera()
+bool Nv12VideoCap::CloseCamera()
 {
     if (camera_.fd <= 0) {
         spdlog::error("{} fd = {}", __FUNCTION__, camera_.fd);
@@ -88,7 +88,7 @@ bool V4l2VideoCapture::CloseCamera()
     return true;
 }
 
-uint64_t V4l2VideoCapture::BuffOneFrame(uint8_t *data)
+uint64_t Nv12VideoCap::BuffOneFrame(uint8_t *data)
 {
     struct v4l2_buffer buf;
     CLEAR(buf);
@@ -122,7 +122,7 @@ uint64_t V4l2VideoCapture::BuffOneFrame(uint8_t *data)
     return len;
 }
 
-bool V4l2VideoCapture::StartPreviewing()
+bool Nv12VideoCap::StartPreviewing()
 {
     enum v4l2_buf_type type;
 
@@ -148,7 +148,7 @@ bool V4l2VideoCapture::StartPreviewing()
     return true;
 }
 
-bool V4l2VideoCapture::StopPreviewing()
+bool Nv12VideoCap::StopPreviewing()
 {
     enum v4l2_buf_type type;
     type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
@@ -159,7 +159,7 @@ bool V4l2VideoCapture::StopPreviewing()
     return true;
 }
 
-bool V4l2VideoCapture::UninitCamera()
+bool Nv12VideoCap::UninitCamera()
 {
     for (uint32_t i = 0; i < n_buffers_; ++i) {
         if (-1 == munmap(camera_.buffers[i].start, camera_.buffers[i].length)) {
@@ -173,7 +173,7 @@ bool V4l2VideoCapture::UninitCamera()
     return true;
 }
 
-bool V4l2VideoCapture::InitMmap()
+bool Nv12VideoCap::InitMmap()
 {
     struct v4l2_requestbuffers req;
 
@@ -229,17 +229,17 @@ bool V4l2VideoCapture::InitMmap()
     return true;
 }
 
-int32_t V4l2VideoCapture::GetFrameLength()
+int32_t Nv12VideoCap::GetFrameLength()
 {
     return camera_.width * camera_.height * 2;
 }
 
-struct Camera *V4l2VideoCapture::GetFormat()
+struct Nv12Camera *Nv12VideoCap::GetFormat()
 {
     return &camera_;
 }
 
-bool V4l2VideoCapture::EnumV4l2Format()
+bool Nv12VideoCap::EnumV4l2Format()
 {
     /* 查询打开的设备是否属于摄像头：设备video不一定是摄像头*/
     int32_t ret = ioctl(camera_.fd, VIDIOC_QUERYCAP, &camera_.v4l2_cap);
@@ -285,7 +285,7 @@ bool V4l2VideoCapture::EnumV4l2Format()
     return true;
 }
 
-bool V4l2VideoCapture::InitCamera()
+bool Nv12VideoCap::InitCamera()
 {
     if (camera_.fd <= 0) {
         spdlog::error("Device = {} fd = {} not init", v4l2_device_, camera_.fd);
@@ -297,9 +297,9 @@ bool V4l2VideoCapture::InitCamera()
 
     fmt->fmt.pix.width  = camera_.width;
     fmt->fmt.pix.height = camera_.height;
-    fmt->type                = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-    fmt->fmt.pix.pixelformat = V4L2_PIX_FMT_YUYV;     // 16  YUV 4:2:2
-    fmt->fmt.pix.field       = V4L2_FIELD_INTERLACED; //隔行扫描
+    fmt->type                = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
+    fmt->fmt.pix.pixelformat = V4L2_PIX_FMT_NV12; // 12  Y/CbCr 4:2:0
+    fmt->fmt.pix.field       = V4L2_FIELD_NONE;
 
     if (-1 == xioctl(camera_.fd, VIDIOC_S_FMT, fmt)) {
         ErrnoExit("VIDIOC_S_FMT");
@@ -336,7 +336,7 @@ bool V4l2VideoCapture::InitCamera()
     return true;
 }
 
-bool V4l2VideoCapture::Init()
+bool Nv12VideoCap::Init()
 {
     bool ret = false;
     ret |= OpenCamera();
@@ -346,7 +346,7 @@ bool V4l2VideoCapture::Init()
     return ret;
 }
 
-bool V4l2VideoCapture::V4l2Close()
+bool Nv12VideoCap::V4l2Close()
 {
     bool ret = false;
     ret |= StopPreviewing();

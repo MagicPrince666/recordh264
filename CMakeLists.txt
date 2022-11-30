@@ -22,6 +22,7 @@ MESSAGE(STATUS ${CMAKE_SYSTEM_NAME})
 add_subdirectory(h264camera)
 add_subdirectory(mjpg)
 add_subdirectory(camera)
+add_subdirectory(nv12)
 
 add_subdirectory(epoll)
 add_subdirectory(ringbuf)
