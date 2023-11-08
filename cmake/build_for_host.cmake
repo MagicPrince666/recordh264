@@ -4,10 +4,10 @@ SET(CMAKE_SYSTEM_NAME Linux)
 SET(CMAKE_INSTALL_PREFIX ${CMAKE_BINARY_DIR}/install)
 
 # 包含x264头文件
-include_directories(${CMAKE_SOURCE_DIR}/x264)
+#include_directories(${CMAKE_SOURCE_DIR}/x264)
 
 # x264库路径
-link_directories(${CMAKE_SOURCE_DIR}/x264)
+#link_directories(${CMAKE_SOURCE_DIR}/x264)
 
 # host
 SET(CMAKE_C_COMPILER gcc)
