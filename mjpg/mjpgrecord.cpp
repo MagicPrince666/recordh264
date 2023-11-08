@@ -68,7 +68,7 @@ void MjpgRecord::VideoCapThread()
 {
     spdlog::info("{} start mjpg captrue", __FUNCTION__);
     if (!capturing_) {
-        MY_EPOLL.EpollAdd(video_->fd, std::bind(&MjpgRecord::CapAndSaveVideo, this));
+        MY_EPOLL.EpollAddRead(video_->fd, std::bind(&MjpgRecord::CapAndSaveVideo, this));
     }
     capturing_ = true;
     while (true) {

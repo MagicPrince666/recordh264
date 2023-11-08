@@ -178,7 +178,7 @@ int32_t V4l2H264hData::getData(void *fTo, unsigned fMaxSize, unsigned &fFrameSiz
 void V4l2H264hData::StartCap()
 {
     if (!b_running_) {
-        MY_EPOLL.EpollAdd(video_format_->fd, std::bind(&V4l2H264hData::RecordAndEncode, this));
+        MY_EPOLL.EpollAddRead(video_format_->fd, std::bind(&V4l2H264hData::RecordAndEncode, this));
     }
     b_running_ = true;
     spdlog::info("V4l2H264hData StartCap");

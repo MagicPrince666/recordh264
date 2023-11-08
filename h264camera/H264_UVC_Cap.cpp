@@ -508,7 +508,7 @@ int32_t H264UvcCap::getData(void *fTo, unsigned fMaxSize, unsigned &fFrameSize, 
 void H264UvcCap::StartCap()
 {
     if (!capturing_) {
-        MY_EPOLL.EpollAdd(video_->fd, std::bind(&H264UvcCap::CapVideo, this));
+        MY_EPOLL.EpollAddRead(video_->fd, std::bind(&H264UvcCap::CapVideo, this));
     }
     capturing_ = true;
 }

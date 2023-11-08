@@ -37,9 +37,6 @@ int main (int argc, char **argv)
 
     spdlog::info("chip hardware concurrency {} !", std::thread::hardware_concurrency());
 
-    std::thread video_cap_loop([]() { MY_EPOLL.EpollLoop(); });
-    video_cap_loop.detach();
-
     if(format == "h264") {
         // 硬件编码H264
         H264UvcCap h264(dev, 1280, 720);
