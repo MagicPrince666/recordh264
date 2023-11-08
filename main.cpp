@@ -37,21 +37,21 @@ int main (int argc, char **argv)
 
     spdlog::info("chip hardware concurrency {} !", std::thread::hardware_concurrency());
 
+    std::shared_ptr<VideoFactory> video_stream_factory;
     if(format == "h264") {
         // 硬件编码H264
-        H264UvcCap h264(dev, 1280, 720);
-        h264.Init();
+        video_stream_factory = std::make_shared<UvcH264Camera>();
     } else if(format == "mjpg") {
         // 硬件编码MJPG
-        MjpgRecord mjpg(dev);
-        mjpg.Init();
+        video_stream_factory = std::make_shared<MjpgCamera>();
     } else if(format == "sh264") {
         // 软件编码H264
-        V4l2H264hData sh264(dev);
-        sh264.Init();
+        video_stream_factory = std::make_shared<UvcYuyvCamera>();
     } else {
         spdlog::error("Not support farmat");
     }
+    std::shared_ptr<VideoStream> video(video_stream_factory->createVideoStream(dev, 1280, 720, 30));
+    video->Init();
 
     while (true) {
         sleep(1);

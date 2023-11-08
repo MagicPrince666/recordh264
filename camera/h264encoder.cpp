@@ -4,10 +4,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "spdlog/cfg/env.h"  // support for loading levels from the environment variable
-#include "spdlog/fmt/ostr.h" // support for user defined types
-#include "spdlog/spdlog.h"
-
 H264Encoder::H264Encoder(int32_t width, int32_t height)
     : video_width_(width),
       video_height_(height)
@@ -109,11 +105,11 @@ void H264Encoder::Init()
     encode_.param   = new (std::nothrow) x264_param_t[sizeof(x264_param_t)];
     encode_.picture = new (std::nothrow) x264_picture_t[sizeof(x264_picture_t)];
 
-    x264_param_default(encode_.param);                //编码器默认设置
-    X264ParamApplyPreset(encode_.param, "ultrafast"); //订制编码器性能
+    x264_param_default(encode_.param);                // 编码器默认设置
+    X264ParamApplyPreset(encode_.param, "ultrafast"); // 订制编码器性能
 
-    encode_.param->i_width  = video_width_;  //设置图像宽度
-    encode_.param->i_height = video_height_; //设置图像高度
+    encode_.param->i_width  = video_width_;  // 设置图像宽度
+    encode_.param->i_height = video_height_; // 设置图像高度
 
     if ((encode_.handle = x264_encoder_open(encode_.param)) == 0) {
         return;
@@ -121,11 +117,11 @@ void H264Encoder::Init()
 #ifdef USE_NV12_FORMAT
     x264_picture_alloc(encode_.picture, X264_CSP_NV12, encode_.param->i_width,
                        encode_.param->i_height);
-    encode_.picture->img.i_csp   = X264_CSP_NV12;
+    encode_.picture->img.i_csp = X264_CSP_NV12;
 #else
     x264_picture_alloc(encode_.picture, X264_CSP_I420, encode_.param->i_width,
                        encode_.param->i_height);
-    encode_.picture->img.i_csp   = X264_CSP_I420;
+    encode_.picture->img.i_csp = X264_CSP_I420;
 #endif
     encode_.picture->img.i_plane = 3;
 }
@@ -148,9 +144,10 @@ void H264Encoder::UnInit()
 
 bool H264Encoder::CompressFrame(frametype type, uint8_t *in, uint8_t *out, uint64_t &length)
 {
+#if 1
     x264_picture_t pic_out;
-    int32_t nNal   = 0;
-    encode_.nal    = nullptr;
+    int32_t nNal = 0;
+    encode_.nal  = nullptr;
     uint8_t *p422;
 
     char *y = (char *)(encode_.picture->img.plane[0]);
@@ -176,7 +173,6 @@ bool H264Encoder::CompressFrame(frametype type, uint8_t *in, uint8_t *out, uint6
             *(y++) = p422[j + 2];
         }
     }
-
     switch (type) {
     case FRAME_TYPE_P:
         encode_.picture->i_type = X264_TYPE_P;
@@ -194,7 +190,7 @@ bool H264Encoder::CompressFrame(frametype type, uint8_t *in, uint8_t *out, uint6
 
     int32_t len = x264_encoder_encode(encode_.handle, &(encode_.nal), &nNal, encode_.picture, &pic_out);
     if (len < 0) {
-        spdlog::error("Encode fail");
+        printf("Encode fail\n");
         return false;
     }
 
@@ -208,5 +204,49 @@ bool H264Encoder::CompressFrame(frametype type, uint8_t *in, uint8_t *out, uint6
         result += encode_.nal[i].i_payload;
     }
     length = result;
+
+#else
+
+    x264_picture_t pic_out;
+    int nNal       = -1;
+    int result     = 0;
+    uint8_t *p_out = out;
+
+    char *y = (char *)(encode_.picture->img.plane[0]);
+    char *u = (char *)(encode_.picture->img.plane[1]);
+    char *v = (char *)(encode_.picture->img.plane[2]);
+
+    memcpy(y, in, 307200);
+    memcpy(u, in + 307200, 76800);
+    memcpy(v, in + 384000, 76800);
+
+    switch (type) {
+    case 0:
+        encode_.picture->i_type = X264_TYPE_P;
+        break;
+    case 1:
+        encode_.picture->i_type = X264_TYPE_IDR;
+        break;
+    case 2:
+        encode_.picture->i_type = X264_TYPE_I;
+        break;
+    default:
+        encode_.picture->i_type = X264_TYPE_AUTO;
+        break;
+    }
+
+    if (x264_encoder_encode(encode_.handle, &(encode_.nal), &nNal, encode_.picture,
+                            &pic_out) < 0) {
+        length = 0;
+        return false;
+    }
+
+    for (int i = 0; i < nNal; i++) {
+        memcpy(p_out, encode_.nal[i].p_payload, encode_.nal[i].i_payload);
+        p_out += encode_.nal[i].i_payload;
+        result += encode_.nal[i].i_payload;
+    }
+    length = result;
+#endif
     return true;
 }

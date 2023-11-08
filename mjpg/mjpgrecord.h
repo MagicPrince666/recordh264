@@ -11,26 +11,32 @@
 #include "avilib.h"
 #include "v4l2uvc.h"
 
+#include "video_source.h"
 #include <iostream>
 #include <thread>
 
-class MjpgRecord
+class MjpgRecord : public VideoStream
 {
 public:
-    MjpgRecord(std::string device = "/dev/video0");
-    ~MjpgRecord();
+    MjpgRecord(std::string dev, uint32_t width, uint32_t height, uint32_t fps);
+    virtual ~MjpgRecord();
 
     /**
      * @brief 初始化
      * @return true
      * @return false
      */
-    bool Init();
+    void Init();
 
     /**
-     * @brief 停止录制
+     * @brief 给live555用
+     * @param fTo
+     * @param fMaxSize
+     * @param fFrameSize
+     * @param fNumTruncatedBytes
+     * @return int32_t
      */
-    void StopCap();
+    int32_t getData(void *fTo, unsigned fMaxSize, unsigned &fFrameSize, unsigned &fNumTruncatedBytes);
 
 private:
     /**
@@ -41,21 +47,29 @@ private:
     bool CapAndSaveVideo();
 
     /**
-     * @brief 视频获取线程
-     */
-    void VideoCapThread();
-
-    /**
      * @brief 时间戳
      * @return std::string
      */
     std::string getCurrentTime8();
 
+    /**
+     * @brief 停止录制
+     */
+    void StopCap();
+
 private:
     struct vdIn *video_;
-    std::string v4l2_device_;
     V4l2Video *mjpg_cap_;
     AviLib *avi_lib_;
-    std::thread cat_avi_thread_;
     bool capturing_;
+};
+
+// 生产mpjg摄像头的工厂
+class MjpgCamera : public VideoFactory
+{
+public:
+    VideoStream *createVideoStream(std::string dev, uint32_t width, uint32_t height, uint32_t fps)
+    {
+        return new MjpgRecord(dev, width, height, fps);
+    }
 };

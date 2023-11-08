@@ -14,7 +14,8 @@
 #include "epoll.h"
 #include "mjpgrecord.h"
 
-MjpgRecord::MjpgRecord(std::string device) : v4l2_device_(device)
+MjpgRecord::MjpgRecord(std::string dev, uint32_t width, uint32_t height, uint32_t fps)
+: VideoStream(dev, width, height, fps)
 {
     mjpg_cap_  = nullptr;
     capturing_ = false;
@@ -22,10 +23,6 @@ MjpgRecord::MjpgRecord(std::string device) : v4l2_device_(device)
 
 MjpgRecord::~MjpgRecord()
 {
-    if (cat_avi_thread_.joinable()) {
-        cat_avi_thread_.join();
-    }
-
     if (mjpg_cap_) {
         mjpg_cap_->VideoDisable();
         mjpg_cap_->CloseV4l2();
@@ -36,18 +33,18 @@ MjpgRecord::~MjpgRecord()
     }
 }
 
-bool MjpgRecord::Init()
+void MjpgRecord::Init()
 {
     std::string filename = getCurrentTime8() + ".avi";
-    mjpg_cap_            = new (std::nothrow) V4l2Video(v4l2_device_, 1280, 720, 30, V4L2_PIX_FMT_MJPEG, 1);
+    mjpg_cap_            = new (std::nothrow) V4l2Video(dev_name_, video_width_, video_height_, video_fps_, V4L2_PIX_FMT_MJPEG, 1);
     avi_lib_             = new (std::nothrow) AviLib(filename);
 
     if (mjpg_cap_->InitVideoIn() < 0) {
-        exit(1);
+        return;
     }
 
     if (mjpg_cap_->VideoEnable() < 0) {
-        exit(1);
+        return;
     }
 
     video_ = mjpg_cap_->GetV4l2Info();
@@ -59,24 +56,12 @@ bool MjpgRecord::Init()
 
     spdlog::info("Start video Capture and saving {}", filename);
 
-    cat_avi_thread_ = std::thread([](MjpgRecord *p_this) { p_this->VideoCapThread(); }, this);
-
-    return true;
+    MY_EPOLL.EpollAddRead(video_->fd, std::bind(&MjpgRecord::CapAndSaveVideo, this));
 }
 
-void MjpgRecord::VideoCapThread()
+int32_t MjpgRecord::getData(void *fTo, unsigned fMaxSize, unsigned &fFrameSize, unsigned &fNumTruncatedBytes)
 {
-    spdlog::info("{} start mjpg captrue", __FUNCTION__);
-    if (!capturing_) {
-        MY_EPOLL.EpollAddRead(video_->fd, std::bind(&MjpgRecord::CapAndSaveVideo, this));
-    }
-    capturing_ = true;
-    while (true) {
-        if (!capturing_) {
-            break;
-        }
-        std::this_thread::sleep_for(std::chrono::seconds(1));
-    }
+    return 0;
 }
 
 bool MjpgRecord::CapAndSaveVideo()

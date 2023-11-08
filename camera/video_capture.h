@@ -6,12 +6,13 @@
  * @date 2022-11-18
  * @copyright Copyright (c) {2021} 个人版权所有
  */
-#pragma once
+#ifndef __VIDEO_CAPTURE_H__
+#define __VIDEO_CAPTURE_H__
 
+#include <iostream>
 #include <linux/videodev2.h>
 #include <pthread.h>
 #include <stdint.h>
-#include <iostream>
 
 #include "h264encoder.h"
 
@@ -21,10 +22,10 @@ struct Buffer {
 };
 
 struct Camera {
-    int32_t fd = -1;
-    int32_t width = 640;
+    int32_t fd     = -1;
+    int32_t width  = 640;
     int32_t height = 480;
-    int32_t fps = 15;
+    int32_t fps    = 30;
     struct v4l2_capability v4l2_cap;
     struct v4l2_cropcap v4l2_cropcap;
     struct v4l2_format v4l2_fmt;
@@ -35,7 +36,7 @@ struct Camera {
 class V4l2VideoCapture
 {
 public:
-    V4l2VideoCapture(std::string dev = "/dev/video0");
+    V4l2VideoCapture(std::string dev = "/dev/video0", uint32_t width = 640, uint32_t height = 480, uint32_t fps = 30);
     ~V4l2VideoCapture();
 
     /**
@@ -48,19 +49,19 @@ public:
      * @param data 拷贝到此地址
      * @param offset 地址偏移
      * @param maxsize 最大长度
-     * @return uint64_t 
+     * @return uint64_t
      */
-    uint64_t BuffOneFrame(uint8_t* data);
+    uint64_t BuffOneFrame(uint8_t *data);
 
     /**
      * 获取帧长度
-    */
+     */
     int32_t GetFrameLength();
 
     /**
      * 获取视频格式
-    */
-    struct Camera* GetFormat();
+     */
+    struct Camera *GetFormat();
 
 private:
     /**
@@ -103,18 +104,17 @@ private:
      */
     bool InitMmap();
 
-    /**
-     * @brief 枚举支持格式
-     * @return true 
-     * @return false 
-     */
     bool EnumV4l2Format();
 
+    void yuyv422ToYuv420p(int inWidth, int inHeight, uint8_t *pSrc, uint8_t *pDest);
+
     void ErrnoExit(const char *s);
-    int32_t xioctl(int32_t fd, int32_t request, void *arg);
+    int32_t xioctl(int32_t fd, uint32_t request, void *arg);
 
 private:
     std::string v4l2_device_;
-    uint32_t n_buffers_;
+    uint32_t n_buffers_ = 0;
     struct Camera camera_;
 };
+
+#endif
