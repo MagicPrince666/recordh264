@@ -45,39 +45,39 @@ record video for H264 camera
 ## 编译方式
 
 ### 编译全志H3
-```
+```bash
 $ mkdir build
 $ cd build
 $ cmake -DCMAKE_TOOLCHAIN_FILE=cmake/build_for_h3.cmake ..
 ```
 ### 编译全志V831
-```
+```bash
 $ mkdir build
 $ cd build
 $ cmake -DCMAKE_TOOLCHAIN_FILE=cmake/build_for_v831.cmake ..
 ```
 
 ### 编译全志f1c100s
-```
+```bash
 $ mkdir build
 $ cd build
 $ cmake -DCMAKE_TOOLCHAIN_FILE=cmake/build_for_f1c100s.cmake ..
 ```
 ### 编译本机
-```
+```bash
 $ mkdir build
 $ cd build
 $ cmake -DCMAKE_TOOLCHAIN_FILE=cmake/build_for_host.cmake ..
 ```
 ### 编译MacOs
-```
+```bash
 $ mkdir build
 $ cd build
 $ cmake -DCMAKE_TOOLCHAIN_FILE=cmake/build_for_darwin.cmake ..
 ```
 
 ### 编译x264
-```
+```bash
 $ git clone https://code.videolan.org/videolan/x264.git
 $ ./configure --host=arm-linux --disable-asm --prefix=$PWD/install 
 ```
@@ -89,18 +89,19 @@ AR=/home/ubuntu/toolchain-sunxi-musl/toolchain/bin/arm-openwrt-linux-muslgnueabi
 RAMLIB=/home/ubuntu/toolchain-sunxi-musl/toolchain/bin/arm-openwrt-linux-muslgnueabi-ranlib
 
 拷贝文件
-```
-$ cp libx264.a ../librtsp/v4l2demo/x264/
-$ cp x264.h ../librtsp/v4l2demo/x264/
-$ cp x264_config.h ../librtsp/v4l2demo/x264/
+```bash
+cp libx264.a ../librtsp/v4l2demo/x264/
+cp x264.h ../librtsp/v4l2demo/x264/
+cp x264_config.h ../librtsp/v4l2demo/x264/
 ```
 
 ### 获取摄像头信息
-```
-$ v4l2-ctl --list-devices
-$ v4l2-ctl --all
-$ v4l2-ctl -d /dev/video0 --all
-$ v4l2-ctl -d /dev/video0 --list-formats-ext
+```bash
+sudo apt install v4l-utils
+v4l2-ctl --list-devices
+v4l2-ctl --all
+v4l2-ctl -d /dev/video0 --all
+v4l2-ctl -d /dev/video0 --list-formats-ext
 ```
 
 ## Donation
