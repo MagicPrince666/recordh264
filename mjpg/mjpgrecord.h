@@ -59,9 +59,8 @@ private:
 
 private:
     struct vdIn *video_;
-    V4l2Video *mjpg_cap_;
-    AviLib *avi_lib_;
-    bool capturing_;
+    std::shared_ptr<V4l2Video> mjpg_cap_;
+    std::shared_ptr<AviLib> avi_lib_;
 };
 
 // 生产mpjg摄像头的工厂

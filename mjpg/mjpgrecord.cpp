@@ -17,8 +17,6 @@
 MjpgRecord::MjpgRecord(std::string dev, uint32_t width, uint32_t height, uint32_t fps)
 : VideoStream(dev, width, height, fps)
 {
-    mjpg_cap_  = nullptr;
-    capturing_ = false;
 }
 
 MjpgRecord::~MjpgRecord()
@@ -26,18 +24,14 @@ MjpgRecord::~MjpgRecord()
     if (mjpg_cap_) {
         mjpg_cap_->VideoDisable();
         mjpg_cap_->CloseV4l2();
-        delete mjpg_cap_;
-    }
-    if (avi_lib_) {
-        delete avi_lib_;
     }
 }
 
 void MjpgRecord::Init()
 {
     std::string filename = getCurrentTime8() + ".avi";
-    mjpg_cap_            = new (std::nothrow) V4l2Video(dev_name_, video_width_, video_height_, video_fps_, V4L2_PIX_FMT_MJPEG, 1);
-    avi_lib_             = new (std::nothrow) AviLib(filename);
+    mjpg_cap_            = std::make_shared<V4l2Video>(dev_name_, video_width_, video_height_, video_fps_, V4L2_PIX_FMT_MJPEG, 1);
+    avi_lib_             = std::make_shared<AviLib>(filename);
 
     if (mjpg_cap_->InitVideoIn() < 0) {
         return;
@@ -91,10 +85,7 @@ bool MjpgRecord::CapAndSaveVideo()
 
 void MjpgRecord::StopCap()
 {
-    if (capturing_) {
-        MY_EPOLL.EpollDel(video_->fd);
-    }
-    capturing_ = false;
+    MY_EPOLL.EpollDel(video_->fd);
 }
 
 std::string MjpgRecord::getCurrentTime8()
