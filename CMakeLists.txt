@@ -24,6 +24,7 @@ include_directories(
     nv12
     ringbuf
     sound
+    mp3
 )
 
 file(GLOB main_srcs
@@ -34,7 +35,8 @@ file(GLOB main_srcs
     mjpg/*.cpp
     nv12/*.cpp
     ringbuf/*.cpp
-    # sound/*.cpp
+    sound/*.cpp
+    mp3/*.cpp
 )
 
 set(EXEC_NAME RecordVideo)
@@ -45,5 +47,8 @@ target_link_libraries(${EXEC_NAME}
     x264
     pthread
     dl
+    asound
+    mpg123
+    faac
 )
 

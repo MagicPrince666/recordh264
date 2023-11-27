@@ -1,5 +1,13 @@
 # UVC H264 camera record
 
+## 安装faac
+```bash
+sudo apt install libfaac-dev
+```
+## 安装mp3解码器
+```bash
+sudo apt install libmpg123-dev
+```
 ## 代码结构
 record video for H264 camera
 文件树：
