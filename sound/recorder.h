@@ -43,6 +43,7 @@ public:
     snd_pcm_uframes_t getFrames() { return pcm_frames; }
     int recodePcm(char *&buffer, snd_pcm_uframes_t frame); //执行录音操作：参数1:采集到的音频的存放数据，参数2：大小
     int recodeAAC(unsigned char *&bufferOut);
+    int recodeAAC();
 
     FILE *fpOut;
     FILE *fpPcm;

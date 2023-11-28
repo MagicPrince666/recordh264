@@ -177,6 +177,37 @@ int Recorder::recodeAAC(unsigned char *&bufferOut)
     return nRet;
 }
 
+int Recorder::recodeAAC()
+{
+    if (!bThreadRunFlag)
+        return 0;
+    // int rc = 0;
+    // printf("recodeAAC 1 %d\n",looptimes);
+    for (int j = 0; j < looptimes; j++) {
+        // rc = recodePcm(buffer,getFrames());
+        recodePcm(buffer, getFrames());
+        memcpy(pbPCMBuffer + j * sizeOfperiod, buffer, getSize());
+    }
+    loopmode = 16;
+    // printf("recodeAAC 2 %d\n",loopmode);
+
+    // rc = recodePcm(buffer,loopmode);
+    recodePcm(buffer, loopmode); //卡在这里 loopmode = 0 导致卡住
+    // printf("recodeAAC 3\n");
+
+    memcpy(pbPCMBuffer + looptimes * sizeOfperiod, buffer, loopmode * getFactor());
+
+    // fwrite(pbPCMBuffer, 1, nPCMBufferSize, fpPcm);
+
+    int nRet = faacEncEncode(hEncoder, (int *)pbPCMBuffer, nInputSamples, pbAACBuffer, nMaxOutputBytes);
+    // printf("recodeAAC 4 %d\n",nRet);
+
+    // printf("faacEncEncode nRet:%d\n ",nRet);
+    fwrite(pbAACBuffer, 1, nRet, fpOut);
+
+    return nRet;
+}
+
 int Recorder::recodePcm(char *&buffer, snd_pcm_uframes_t frame)
 {
     // printf("Recorder::recode 1 handle:%d bufsize:%d\n",handle,bufsize);

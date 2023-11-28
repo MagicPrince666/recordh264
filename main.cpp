@@ -1,7 +1,7 @@
 /**
  * @file main.cpp
  * @author 黄李全 (846863428@qq.com)
- * @brief 
+ * @brief
  * @version 0.1
  * @date 2022-11-25
  * @copyright Copyright (c) {2021} 个人版权所有
@@ -10,22 +10,23 @@
 #include <iostream>
 #include <thread>
 
-#include "spdlog/spdlog.h"
 #include "spdlog/cfg/env.h"  // support for loading levels from the environment variable
 #include "spdlog/fmt/ostr.h" // support for user defined types
+#include "spdlog/spdlog.h"
 
 #include "H264_UVC_Cap.h"
-#include "mjpgrecord.h"
-#include "h264_camera.h"
 #include "epoll.h"
+#include "h264_camera.h"
+#include "mjpgrecord.h"
+#include "recorder.h"
 
-int main (int argc, char **argv) 
+int main(int argc, char **argv)
 {
     std::string format = "h264";
-    std::string dev = "/dev/video0";
+    std::string dev    = "/dev/video0";
 
-    if(argc > 2) {
-        dev = (char *)argv[1];
+    if (argc > 2) {
+        dev    = (char *)argv[1];
         format = (char *)argv[2];
     } else {
         spdlog::error("Please Set video farmat");
@@ -38,25 +39,30 @@ int main (int argc, char **argv)
     spdlog::info("chip hardware concurrency {} !", std::thread::hardware_concurrency());
 
     std::shared_ptr<VideoFactory> video_stream_factory;
-    if(format == "h264") {
+    if (format == "h264") {
         // 硬件编码H264
         video_stream_factory = std::make_shared<UvcH264Camera>();
-    } else if(format == "mjpg") {
+    } else if (format == "mjpg") {
         // 硬件编码MJPG
         video_stream_factory = std::make_shared<MjpgCamera>();
-    } else if(format == "sh264") {
+    } else if (format == "sh264") {
         // 软件编码H264
         video_stream_factory = std::make_shared<UvcYuyvCamera>();
     } else {
         spdlog::error("Not support farmat");
     }
-    std::shared_ptr<VideoStream> video(video_stream_factory->createVideoStream(dev, 1280, 720, 30));
-    video->Init();
+    if (video_stream_factory) {
+        std::shared_ptr<VideoStream> video(video_stream_factory->createVideoStream(dev, 1280, 720, 30));
+        video->Init();
+    }
+    // std::unique_ptr<Recorder> record(new Recorder());
 
     while (true) {
-        sleep(1);
+        if (record) {
+            record->recodeAAC();
+        }
+        usleep(100000);
     }
 
-    return 0; 
+    return 0;
 }
-
