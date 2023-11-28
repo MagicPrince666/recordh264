@@ -55,7 +55,7 @@ int main(int argc, char **argv)
         std::shared_ptr<VideoStream> video(video_stream_factory->createVideoStream(dev, 1280, 720, 30));
         video->Init();
     }
-    // std::unique_ptr<Recorder> record(new Recorder());
+    std::unique_ptr<Recorder> record(new Recorder());
 
     while (true) {
         if (record) {
