@@ -111,7 +111,10 @@ v4l2-ctl --all
 v4l2-ctl -d /dev/video0 --all
 v4l2-ctl -d /dev/video0 --list-formats-ext
 ```
-
+### 查看MPP日志
+```bash
+tail -f /var/log/syslog
+```
 ## Donation
 码农不易 尊重劳动
 
