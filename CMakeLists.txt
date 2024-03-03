@@ -13,6 +13,11 @@ option(USE_RK_HW_ENCODER "Use Rockchip hardware encoder" OFF)
 
 MESSAGE(STATUS ${CMAKE_SYSTEM_NAME})
 
+set(CMAKE_BUILD_TYPE "Debug")
+if (${CMAKE_BUILD_TYPE} MATCHES "Debug")
+add_definitions(-DBACKTRACE_DEBUG)
+endif ()
+
 find_package(PkgConfig REQUIRED)
 
 include_directories(
