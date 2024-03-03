@@ -19,9 +19,18 @@
 #include "h264_camera.h"
 #include "mjpgrecord.h"
 #include "recorder.h"
+#if defined(USE_RK_HW_ENCODER)
+#include "rk_mpp/rk_mpp_encoder.h"
+#endif
 
 int main(int argc, char **argv)
 {
+    spdlog::info("chip hardware concurrency {} !", std::thread::hardware_concurrency());
+
+#if defined(USE_RK_HW_ENCODER)
+    std::shared_ptr<RkMppEncoder> rk_encoder = std::make_shared<RkMppEncoder>();
+#else
+
     std::string format = "h264";
     std::string dev    = "/dev/video0";
 
@@ -35,8 +44,6 @@ int main(int argc, char **argv)
     }
 
     spdlog::info("{} farmat = {}", dev, format);
-
-    spdlog::info("chip hardware concurrency {} !", std::thread::hardware_concurrency());
 
     std::shared_ptr<VideoFactory> video_stream_factory;
     if (format == "h264") {
@@ -57,10 +64,13 @@ int main(int argc, char **argv)
     }
     std::unique_ptr<Recorder> record(new Recorder());
 
+#endif
     while (true) {
+#if !defined(USE_RK_HW_ENCODER)
         if (record) {
             record->recodeAAC();
         }
+#endif
         usleep(100000);
     }
 

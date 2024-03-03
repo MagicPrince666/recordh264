@@ -38,11 +38,15 @@ file(GLOB main_srcs
     ringbuf/*.cpp
     sound/*.cpp
     mp3/*.cpp
-    if (USE_RK_HW_ENCODER)
-        rk_mpp/*.cpp
-        rk_mpp/*.c
-    endif ()
 )
+
+if (USE_RK_HW_ENCODER)
+file(GLOB rk_mpp_srcs 
+    rk_mpp/*.cpp
+    rk_mpp/*.c
+)
+list(APPEND main_srcs ${rk_mpp_srcs})
+endif ()
 
 set(COMMON_LIBRARIES
     x264
