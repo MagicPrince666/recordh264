@@ -22,12 +22,74 @@
 #if defined(USE_RK_HW_ENCODER)
 #include "rk_mpp/rk_mpp_encoder.h"
 #endif
-
-#ifdef BACKTRACE_DEBUG
-#include <signal.h>
 #include <execinfo.h>
+#include <csignal>
+#include <cstdlib>
+#include <cstdio>
+#include <cstring>
 
 #define PRINT_SIZE_ 100
+const char *g_exe_name;
+
+void Execute(std::string cmdline, std::string &recv)
+{
+#if defined(__unix__)
+    FILE *stream = NULL;
+    char buff[1024];
+    char recv_buff[256]      = {0};
+
+    memset(recv_buff, 0, sizeof(recv_buff));
+
+    if ((stream = popen(cmdline.c_str(), "r")) != NULL) {
+        while (fgets(buff, 1024, stream)) {
+            strcat(recv_buff, buff);
+        }
+    }
+    recv = recv_buff;
+    pclose(stream);
+#endif
+}
+
+void SuperExecute(std::string cmdline, std::string passwd)
+{
+#if defined(__unix__)
+    char cmd[256] = {0};
+    int len = snprintf(cmd, sizeof(cmd), "echo %s | sudo -S %s", passwd.c_str(), cmdline.c_str());
+    cmd[len] = 0;
+    system(cmd);
+#endif
+}
+
+void Addr2Line(std::string exe, std::vector<std::string>& strs)
+{
+#if defined(__unix__)
+    char str[1024] = {0};
+    for (uint32_t i = 0; i < strs.size(); i++) {
+        std::string line = strs[i];
+        std::string::size_type index = line.find("(+"); // found start stuck
+        line = line.substr(index + 1, line.size() - index - 1);
+        if (index != std::string::npos) {
+            index = line.find(")"); // foud end
+            if (index != std::string::npos) {
+                line = line.substr(0, index);
+                int len = snprintf(str, sizeof(str), "addr2line -e %s %s", exe.c_str(), line.c_str());
+                str[len] = 0;
+                // std::cout << "Run " << str << std::endl;
+                std::string recv;
+                Execute(str, recv);
+                std::ofstream outfile;
+                if (recv.find("??") == std::string::npos) {
+                    outfile.open("coredump.log", std::ios::out | std::ios::app);
+                    if (outfile.is_open()) {
+                        outfile << recv;
+                        outfile.close();
+                    }
+                }
+            }
+        }
+    }
+#endif
+}
 
 static void _signal_handler(int signum)
 {
@@ -35,53 +97,72 @@ static void _signal_handler(int signum)
     char **strings;
 
     size_t size = backtrace(array, PRINT_SIZE_);
-    strings = backtrace_symbols(array, size);
+    strings     = backtrace_symbols(array, size);
 
     if (strings == nullptr) {
-	   fprintf(stderr, "backtrace_symbols");
-	   exit(EXIT_FAILURE);
+        fprintf(stderr, "backtrace_symbols");
+        exit(EXIT_FAILURE);
     }
 
-    switch(signum) {
-        case SIGSEGV:
+    switch (signum) {
+    case SIGSEGV:
         fprintf(stderr, "widebright received SIGSEGV! Stack trace:\n");
         break;
 
-        case SIGPIPE:
+    case SIGPIPE:
         fprintf(stderr, "widebright received SIGPIPE! Stack trace:\n");
         break;
 
-        case SIGFPE:
+    case SIGFPE:
         fprintf(stderr, "widebright received SIGFPE! Stack trace:\n");
         break;
 
-        case SIGABRT:
+    case SIGABRT:
         fprintf(stderr, "widebright received SIGABRT! Stack trace:\n");
         break;
 
-        default:
+    default:
         break;
     }
-
+#ifdef BACKTRACE_DEBUG
+    std::vector<std::string> strs;
     for (size_t i = 0; i < size; i++) {
-        fprintf(stderr, "%zu %s \n", i, strings[i]);
+        fprintf(stderr, "%ld %s \n", i, strings[i]);
+        strs.push_back(strings[i]);
     }
-
+    Addr2Line(g_exe_name, strs);
+#else
+    std::string path = std::string(g_exe_name) + ".log";
+    std::ofstream outfile(path, std::ios::out | std::ios::app);
+    if (outfile.is_open()) {
+        outfile << "Commit ID: " << GIT_VERSION << std::endl;
+        outfile << "Git path: " << GIT_PATH << std::endl;
+        outfile << "Compile time: " << __TIME__ << " " << __DATE__ << std::endl;
+    }
+    for (size_t i = 0; i < size; i++) {
+        fprintf(stderr, "%ld %s \n", i, strings[i]);
+        if (outfile.is_open()) {
+            outfile << strings[i] << std::endl;
+        }
+    }
+    if (outfile.is_open()) {
+        outfile.close();
+    }
+#endif
     free(strings);
     signal(signum, SIG_DFL); /* 还原默认的信号处理handler */
-
-    exit(1);
+    fprintf(stderr, "Quit execute now\n");
+    fflush(stderr);
+    exit(-1);
 }
-#endif
 
 int main(int argc, char **argv)
 {
-#ifdef BACKTRACE_DEBUG
-    signal(SIGPIPE, _signal_handler);  // SIGPIPE，管道破裂。
-    signal(SIGSEGV, _signal_handler);  // SIGSEGV，非法内存访问
+    g_exe_name = argv[0];
+    signal(SIGPIPE, _signal_handler); // SIGPIPE，管道破裂。
+    signal(SIGSEGV, _signal_handler); // SIGSEGV，非法内存访问
     signal(SIGFPE, _signal_handler);  // SIGFPE，数学相关的异常，如被0除，浮点溢出，等等
-    signal(SIGABRT, _signal_handler);  // SIGABRT，由调用abort函数产生，进程非正常退出
-#endif
+    signal(SIGABRT, _signal_handler); // SIGABRT，由调用abort函数产生，进程非正常退出
 
     spdlog::info("chip hardware concurrency {} !", std::thread::hardware_concurrency());
 
