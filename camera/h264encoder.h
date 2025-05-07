@@ -15,6 +15,7 @@
 #include "x264.h"
 
 // #define USE_NV12_FORMAT
+// #define USE_FMT_YUV420
 
 enum frametype {
     FRAME_TYPE_P = 0,

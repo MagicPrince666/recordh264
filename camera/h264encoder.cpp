@@ -144,7 +144,50 @@ void H264Encoder::UnInit()
 
 bool H264Encoder::CompressFrame(frametype type, uint8_t *in, uint8_t *out, uint64_t &length)
 {
-#if 1
+#ifdef USE_NV12_FORMAT
+
+#elif defined(USE_FMT_YUV420)
+    x264_picture_t pic_out;
+    int nNal       = -1;
+    int result     = 0;
+    uint8_t *p_out = out;
+
+    char *y = (char *)(encode_.picture->img.plane[0]);
+    char *u = (char *)(encode_.picture->img.plane[1]);
+    char *v = (char *)(encode_.picture->img.plane[2]);
+
+    memcpy(y, in, 307200);
+    memcpy(u, in + 307200, 76800);
+    memcpy(v, in + 384000, 76800);
+
+    switch (type) {
+    case 0:
+        encode_.picture->i_type = X264_TYPE_P;
+        break;
+    case 1:
+        encode_.picture->i_type = X264_TYPE_IDR;
+        break;
+    case 2:
+        encode_.picture->i_type = X264_TYPE_I;
+        break;
+    default:
+        encode_.picture->i_type = X264_TYPE_AUTO;
+        break;
+    }
+
+    if (x264_encoder_encode(encode_.handle, &(encode_.nal), &nNal, encode_.picture,
+                            &pic_out) < 0) {
+        length = 0;
+        return false;
+    }
+
+    for (int i = 0; i < nNal; i++) {
+        memcpy(p_out, encode_.nal[i].p_payload, encode_.nal[i].i_payload);
+        p_out += encode_.nal[i].i_payload;
+        result += encode_.nal[i].i_payload;
+    }
+    length = result;
+#else
     x264_picture_t pic_out;
     int32_t nNal = 0;
     encode_.nal  = nullptr;
@@ -199,49 +242,6 @@ bool H264Encoder::CompressFrame(frametype type, uint8_t *in, uint8_t *out, uint6
     encode_.picture->i_pts++;
 
     for (int32_t i = 0; i < nNal; i++) {
-        memcpy(p_out, encode_.nal[i].p_payload, encode_.nal[i].i_payload);
-        p_out += encode_.nal[i].i_payload;
-        result += encode_.nal[i].i_payload;
-    }
-    length = result;
-
-#else
-
-    x264_picture_t pic_out;
-    int nNal       = -1;
-    int result     = 0;
-    uint8_t *p_out = out;
-
-    char *y = (char *)(encode_.picture->img.plane[0]);
-    char *u = (char *)(encode_.picture->img.plane[1]);
-    char *v = (char *)(encode_.picture->img.plane[2]);
-
-    memcpy(y, in, 307200);
-    memcpy(u, in + 307200, 76800);
-    memcpy(v, in + 384000, 76800);
-
-    switch (type) {
-    case 0:
-        encode_.picture->i_type = X264_TYPE_P;
-        break;
-    case 1:
-        encode_.picture->i_type = X264_TYPE_IDR;
-        break;
-    case 2:
-        encode_.picture->i_type = X264_TYPE_I;
-        break;
-    default:
-        encode_.picture->i_type = X264_TYPE_AUTO;
-        break;
-    }
-
-    if (x264_encoder_encode(encode_.handle, &(encode_.nal), &nNal, encode_.picture,
-                            &pic_out) < 0) {
-        length = 0;
-        return false;
-    }
-
-    for (int i = 0; i < nNal; i++) {
         memcpy(p_out, encode_.nal[i].p_payload, encode_.nal[i].i_payload);
         p_out += encode_.nal[i].i_payload;
         result += encode_.nal[i].i_payload;

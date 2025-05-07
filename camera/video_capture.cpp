@@ -262,11 +262,12 @@ bool V4l2VideoCapture::InitCamera()
 #ifdef USE_NV12_FORMAT
     fmt->fmt.pix.pixelformat = V4L2_PIX_FMT_NV12; // 12  Y/CbCr 4:2:0
     fmt->fmt.pix.field       = V4L2_FIELD_ANY;
+#elif defined(USE_FMT_YUV420)
+    fmt->fmt.pix.pixelformat = V4L2_PIX_FMT_YUV420; // 12  YUV 4:2:0
+    fmt->fmt.pix.field = V4L2_FIELD_ANY;
 #else
     fmt->fmt.pix.pixelformat = V4L2_PIX_FMT_YUYV; // 16  YUV 4:2:2
     fmt->fmt.pix.field       = V4L2_FIELD_ANY;    // 隔行扫描
-    // fmt->fmt.pix.pixelformat = V4L2_PIX_FMT_YUV420; // 12  YUV 4:2:0
-    // fmt->fmt.pix.field = V4L2_FIELD_ANY;
 #endif
 
     if (-1 == xioctl(camera_.fd, VIDIOC_S_FMT, fmt)) {
