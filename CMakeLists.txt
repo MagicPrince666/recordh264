@@ -74,13 +74,45 @@ list(APPEND main_srcs ${rk_mpp_srcs})
 endif ()
 
 set(COMMON_LIBRARIES
-    x264
     pthread
     dl
-    asound
-    mpg123
-    faac
 )
+
+# 查找libx264库
+pkg_check_modules(LIBX264 x264)
+pkg_check_modules(LIBASOUND alsa)
+pkg_check_modules(LIBMPG123 libmpg123)
+find_library(LIBFAAC_LIBRARY faac)
+find_path(LIBFAAC_INCLUDE_DIR faac.h)
+
+if (LIBX264_FOUND)
+    list(APPEND COMMON_LIBRARIES
+        ${LIBX264_LIBRARIES}
+    )
+endif ()
+
+if (LIBASOUND_FOUND)
+    list(APPEND COMMON_LIBRARIES
+        ${LIBASOUND_LIBRARIES}
+    )
+endif ()
+
+if (LIBMPG123_FOUND)
+    list(APPEND COMMON_LIBRARIES
+        ${LIBMPG123_LIBRARIES}
+    )
+endif ()
+
+if(LIBFAAC_LIBRARY AND LIBFAAC_INCLUDE_DIR)
+    message(STATUS "libfaac found: ${LIBFAAC_LIBRARY}")
+    # message(STATUS "libfaac found: ${LIBFAAC_INCLUDE_DIR}")
+    add_definitions( -DUSE_LIBFAAC )
+    list(APPEND COMMON_LIBRARIES
+        ${LIBFAAC_LIBRARY}
+    )
+else()
+    message(STATUS "libfaac not found")
+endif()
 
 if (USE_RK_HW_ENCODER)
     pkg_search_module(RK_MPP REQUIRED rockchip_mpp)

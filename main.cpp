@@ -201,14 +201,17 @@ int main(int argc, char **argv)
         std::shared_ptr<VideoStream> video(video_stream_factory->createVideoStream(dev, 1280, 720, 30));
         video->Init();
     }
+#ifdef USE_LIBFAAC
     std::unique_ptr<Recorder> record(new Recorder());
-
+#endif
 #endif
     while (true) {
 #if !defined(USE_RK_HW_ENCODER)
+#ifdef USE_LIBFAAC
         if (record) {
             record->recodeAAC();
         }
+#endif
 #endif
         usleep(100000);
     }

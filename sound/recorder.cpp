@@ -28,23 +28,29 @@ Recorder::Recorder(int rate, int formate, int channels, snd_pcm_uframes_t frames
 
     remove("Record.aac");
     // remove("Record.pcm");
-
+#ifdef USE_LIBFAAC
     fpOut = fopen("Record.aac", "wb");
     // fpPcm = fopen("Record.pcm", "wb");
-
+#endif
     initPcm();
+#ifdef USE_LIBFAAC
     initAAC();
+#endif
 }
 
 Recorder::~Recorder()
 {
     bThreadRunFlag = false;
+#ifdef USE_LIBFAAC
     faacEncClose(hEncoder);
+#endif
     snd_pcm_close(handle);
     delete[] buffer;
+#ifdef USE_LIBFAAC
     delete[] pbAACBuffer;
-    delete[] pbPCMBuffer;
     fclose(fpOut);
+#endif
+    delete[] pbPCMBuffer;
     //    fclose(fpPcm);
 }
 
@@ -105,6 +111,7 @@ void Recorder::initPcm()
     printf("factor_: %d  pcm_channels:%d size:%d frames:%lu\n", factor, pcm_channels, size, frames);
 }
 
+#ifdef USE_LIBFAAC
 void Recorder::initAAC()
 {
     ULONG nSampleRate = pcm_rate;                                     // 采样率
@@ -146,6 +153,7 @@ void Recorder::initAAC()
 
 int Recorder::recodeAAC(unsigned char *&bufferOut)
 {
+
     if (!bThreadRunFlag)
         return 0;
     // int rc = 0;
@@ -207,6 +215,7 @@ int Recorder::recodeAAC()
 
     return nRet;
 }
+#endif
 
 int Recorder::recodePcm(char *&buffer, snd_pcm_uframes_t frame)
 {

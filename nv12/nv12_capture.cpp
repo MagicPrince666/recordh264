@@ -299,7 +299,7 @@ bool Nv12VideoCap::InitCamera()
     fmt->fmt.pix.height = camera_.height;
     fmt->type                = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
     fmt->fmt.pix.pixelformat = V4L2_PIX_FMT_NV12; // 12  Y/CbCr 4:2:0
-    fmt->fmt.pix.field       = V4L2_FIELD_NONE;
+    fmt->fmt.pix.field       = V4L2_FIELD_ANY;
 
     if (-1 == xioctl(camera_.fd, VIDIOC_S_FMT, fmt)) {
         ErrnoExit("VIDIOC_S_FMT");

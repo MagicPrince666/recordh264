@@ -16,9 +16,11 @@
 /* Use the newer ALSA API */
 #define ALSA_PCM_NEW_HW_PARAMS_API
 #include <alsa/asoundlib.h>
-#include <faac.h>
 #include <stdio.h>
 #include <stdlib.h>
+#ifdef USE_LIBFAAC
+#include <faac.h>
+#endif
 
 typedef unsigned long ULONG;
 typedef unsigned int UINT;
@@ -37,13 +39,16 @@ public:
     ~Recorder();
 
     void initPcm();
-    void initAAC();
+    
     int getSize() { return size; }
     int getFactor() { return factor; }
     snd_pcm_uframes_t getFrames() { return pcm_frames; }
     int recodePcm(char *&buffer, snd_pcm_uframes_t frame); //执行录音操作：参数1:采集到的音频的存放数据，参数2：大小
+#ifdef USE_LIBFAAC
+    void initAAC();
     int recodeAAC(unsigned char *&bufferOut);
     int recodeAAC();
+#endif
 
     FILE *fpOut;
     FILE *fpPcm;
@@ -56,8 +61,9 @@ private:
     int pcm_rate;                 //采样率
     int pcm_format;               // pcm采样格式
     int pcm_channels;             // pcm声道
+#ifdef USE_LIBFAAC
     faacEncHandle hEncoder;
-
+#endif
     int sizeOfperiod;
     int looptimes;
     int loopmode;
