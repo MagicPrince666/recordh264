@@ -55,19 +55,19 @@ bool V4l2VideoCapture::OpenCamera()
 
     if (-1 == stat(v4l2_device_.c_str(), &st)) {
         printf("Cannot identify '%s': %d, %s\n", v4l2_device_.c_str(), errno, strerror(errno));
-        exit(EXIT_FAILURE);
+        return false;
     }
 
     if (!S_ISCHR(st.st_mode)) {
         printf("%s is no device\n", v4l2_device_.c_str());
-        exit(EXIT_FAILURE);
+        return false;
     }
 
     camera_.fd = open(v4l2_device_.c_str(), O_RDWR, 0); //  | O_NONBLOCK
 
     if (camera_.fd <= 0) {
         printf("Cannot open '%s': %d, %s\n", v4l2_device_.c_str(), errno, strerror(errno));
-        exit(EXIT_FAILURE);
+        return false;
     }
 
     printf("%s fd = %d\n", __FUNCTION__, camera_.fd);
@@ -250,7 +250,9 @@ bool V4l2VideoCapture::InitCamera()
         return false;
     }
 
-    EnumV4l2Format();
+    if (!EnumV4l2Format()) {
+        return false;
+    }
 
     struct v4l2_format *fmt = &(camera_.v4l2_fmt);
 
@@ -386,7 +388,18 @@ bool V4l2VideoCapture::Init()
 {
     bool ret = false;
     ret |= OpenCamera();
-    ret |= InitCamera();
+    if (!InitCamera()) {
+        for (uint32_t i = 0; i < 50; i++) {
+            CloseCamera();
+            v4l2_device_ = "/dev/video" + std::to_string(i);
+            if (!OpenCamera()) {
+                break;
+            }
+            if (InitCamera()) {
+                break;
+            }
+        }
+    }
     ret |= StartPreviewing();
     if (ret) {
         printf("Carmera init success\n");
