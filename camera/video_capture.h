@@ -107,6 +107,8 @@ private:
     bool EnumV4l2Format();
 
     void yuyv422ToYuv420p(int inWidth, int inHeight, uint8_t *pSrc, uint8_t *pDest);
+    void NV12_YUV420P(const unsigned char* image_src, unsigned char* image_dst, int image_width, int image_height);
+    void NV21_YUV420P(const unsigned char* image_src, unsigned char* image_dst, int image_width, int image_height);
 
     void ErrnoExit(const char *s);
     int32_t xioctl(int32_t fd, uint32_t request, void *arg);

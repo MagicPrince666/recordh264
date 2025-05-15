@@ -23,8 +23,8 @@ int player (int argc, char *argv[]) {
   long rate=0;
   size_t lretval;
   int channels=0;
-  char *alsa_dev;
-  char *file_to_play="blb.mp3";		// I know you have a Bruce Lee Band's song laying around.
+  const char *alsa_dev;
+  const char *file_to_play="blb.mp3";		// I know you have a Bruce Lee Band's song laying around.
   mpg123_handle *m;
   uint8_t wavbuffer[32768];
 
