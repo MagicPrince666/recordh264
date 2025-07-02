@@ -10,12 +10,12 @@
 #define __VIDEO_CAPTURE_H__
 
 #include <iostream>
-#include <linux/videodev2.h>
 #include <pthread.h>
 #include <stdint.h>
+#include <functional>
 
-#include "h264encoder.h"
-
+#if defined(__linux__)
+#include <linux/videodev2.h>
 struct Buffer {
     void *start;
     size_t length;
@@ -40,9 +40,16 @@ public:
     ~V4l2VideoCapture();
 
     /**
+     * @brief 枚举摄像头信息
+     * @return true 
+     * @return false 
+     */
+    bool EnumV4l2Format();
+
+    /**
      * @brief 初始化
      */
-    bool Init();
+    bool Init(uint32_t pixelformat);
 
     /**
      * @brief 获取一帧数据
@@ -63,11 +70,11 @@ public:
      */
     struct Camera *GetFormat();
 
-private:
     /**
-     * @brief 关闭v4l2资源
+     * @brief 回调注册
+     * @param handler 
      */
-    bool V4l2Close();
+    void AddCallback(std::function<bool(const uint8_t *, const uint32_t)> handler);
 
     /**
      * @brief 打开摄像头
@@ -78,6 +85,38 @@ private:
      * @brief 关闭摄像头
      */
     bool CloseCamera();
+
+    /**
+     * @brief 是否支持MJPG
+     * @return true 
+     * @return false 
+     */
+    bool CanOutputMjpg() {
+        return can_ouput_mjpg_;
+    }
+
+    /**
+     * @brief 
+     * @return true 
+     * @return false 
+     */
+    bool CanOutputStream() {
+        return can_ouput_stream_;
+    }
+
+    /**
+     * @brief 保存jpg图像
+     * @param buffer 
+     * @param size 
+     * @param name 
+     */
+    void SaveJpeg(void* buffer, uint64_t size, std::string name);
+
+private:
+    /**
+     * @brief 关闭v4l2资源
+     */
+    bool V4l2Close();
 
     /**
      * @brief 开始录制
@@ -104,19 +143,26 @@ private:
      */
     bool InitMmap();
 
-    bool EnumV4l2Format();
+    void NV12_to_YUYV(int width, int height, void *src, void *dst);
 
     void yuyv422ToYuv420p(int inWidth, int inHeight, uint8_t *pSrc, uint8_t *pDest);
-    void NV12_YUV420P(const unsigned char* image_src, unsigned char* image_dst, int image_width, int image_height);
-    void NV21_YUV420P(const unsigned char* image_src, unsigned char* image_dst, int image_width, int image_height);
 
+    const char *V4l2FormatToString(uint32_t pixelformat);
     void ErrnoExit(const char *s);
-    int32_t xioctl(int32_t fd, uint32_t request, void *arg);
+    int32_t xioctl(int32_t fd, int32_t request, void *arg);
+
+    void ReadBuffOneFrame();
 
 private:
     std::string v4l2_device_;
-    uint32_t n_buffers_ = 0;
+    uint32_t n_buffers_;
     struct Camera camera_;
+    /*call back function*/
+    std::function<bool(const uint8_t *, const uint32_t)> process_image_;
+    bool can_ouput_mjpg_;
+    bool can_ouput_stream_;
+    uint32_t pixelformat_;
 };
 
+#endif
 #endif
