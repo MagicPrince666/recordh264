@@ -15,7 +15,7 @@
 #include <unistd.h>
 
 #include "video_capture.h"
-#include "xepoll.h"
+#include "epoll.h"
 
 #if defined(__linux__)
 #include <linux/videodev2.h>

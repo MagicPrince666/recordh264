@@ -15,6 +15,7 @@
 
 #include "video_capture.h"
 #include "video_source.h"
+#include "h264encoder.h"
 
 #define CLEAR(x) memset(&(x), 0, sizeof(x))
 

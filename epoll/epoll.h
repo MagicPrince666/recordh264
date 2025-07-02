@@ -1,29 +1,30 @@
 /**
  * @file epoll.h
- * @author Leo Huang (846863428@qq.com)
+ * @author 黄李全 (846863428@qq.com)
  * @brief 单例类 观察者模式
  * @version 0.1
- * @date 2023-11-08
+ * @date 2022-11-18
  * @copyright Copyright (c) {2021} 个人版权所有
  */
-#ifndef __MY_EPOLL_H__
-#define __MY_EPOLL_H__
+#ifndef __XEPOLL_H__
+#define __XEPOLL_H__
 
-#include <sys/socket.h>
-#ifdef __APPLE__
+#if defined(__APPLE__)
 #include <sys/event.h>
-#else
+#elif defined(__linux__)
 #include <sys/epoll.h>
+#endif
+#if defined(__unix__)
+#include <sys/socket.h>
 #endif
 
 #include <functional>
 #include <string>
 #include <unordered_map>
-#include <vector>
 #include <mutex>
 #include <thread>
 
-#define MAXEVENTS 20
+#define MAXEVENTS 50
 #define EPOLL_FD_SETSIZE 1024
 
 #define MY_EPOLL Epoll::Instance()
@@ -84,6 +85,10 @@ public:
      */
     bool EpoolQuit();
 
+    bool EpollLoopRunning() {
+        return epoll_loop_;
+    }
+
 private:
     Epoll();
 
@@ -93,11 +98,10 @@ private:
      */
     int EpollLoop();
 
-#ifndef __APPLE__
+#if defined(__APPLE__)
+    struct kevent events_[MAXEVENTS]; // kevent返回的事件列表（参考后面的kevent函数）
+#elif defined(__linux__)
     struct epoll_event ev_, events_[MAXEVENTS];
-#else
-    struct kevent ev_[MAXEVENTS];
-    struct kevent activeEvs_[MAXEVENTS];
 #endif
     int epfd_;
     bool epoll_loop_{true};
