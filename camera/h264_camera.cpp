@@ -64,7 +64,7 @@ V4l2H264hData::~V4l2H264hData()
 void V4l2H264hData::Init()
 {
     p_capture_ = new (std::nothrow) V4l2VideoCapture(dev_name_.c_str(), video_width_, video_height_, video_fps_);
-    p_capture_->Init(); // 初始化摄像头
+    p_capture_->Init(V4L2_PIX_FMT_YUYV); // 初始化摄像头
     video_format_ = p_capture_->GetFormat();
     camera_buf_   = new (std::nothrow) uint8_t[p_capture_->GetFrameLength()];
     encoder_      = new (std::nothrow) H264Encoder(video_format_->width, video_format_->height);
