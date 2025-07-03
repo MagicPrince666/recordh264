@@ -6,7 +6,8 @@
  * @date 2022-11-18
  * @copyright Copyright (c) {2021} 个人版权所有
  */
-#pragma once
+#ifndef __VIDEO_CAPTURE_H__
+#define __VIDEO_CAPTURE_H__
 
 #include <linux/videodev2.h>
 #include <pthread.h>
@@ -116,3 +117,5 @@ private:
     uint32_t n_buffers_;
     struct Nv12Camera camera_;
 };
+
+#endif

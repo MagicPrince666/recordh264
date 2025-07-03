@@ -6,7 +6,9 @@
  * @date 2022-11-23
  * @copyright Copyright (c) {2021} 个人版权所有
  */
-#pragma once
+#ifndef __H264_XU_CTRLS_H__
+#define __H264_XU_CTRLS_H__
+
 
 #include <linux/version.h>
 #include <linux/videodev2.h>
@@ -307,3 +309,5 @@ private:
 
     int32_t XuSFRead(uint32_t Addr, uint8_t *pData, uint32_t Length);
 };
+
+#endif

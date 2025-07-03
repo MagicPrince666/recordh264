@@ -6,7 +6,8 @@
  * @date 2022-11-27
  * @copyright Copyright (c) {2021} 个人版权所有
  */
-#pragma once
+#ifndef __MJPG_RECORD_H__
+#define __MJPG_RECORD_H__
 
 #include "avilib.h"
 #include "v4l2uvc.h"
@@ -72,3 +73,5 @@ public:
         return new MjpgRecord(dev, width, height, fps);
     }
 };
+
+#endif

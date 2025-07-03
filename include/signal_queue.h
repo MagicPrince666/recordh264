@@ -1,4 +1,5 @@
-#pragma once
+#ifndef __SIGNAL_QUEUE_H__
+#define __SIGNAL_QUEUE_H__
 
 #include <atomic>
 #include <condition_variable>
@@ -78,3 +79,5 @@ class SignalQueue {
     std::atomic<bool> is_set_flag_;
     uint32_t max_len_;
 };
+
+#endif

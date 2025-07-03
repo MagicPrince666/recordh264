@@ -6,7 +6,9 @@
  * @date 2022-11-23
  * @copyright Copyright (c) {2021} 个人版权所有
  */
-#pragma once
+#ifndef __DEBUG_H__
+#define __DEBUG_H__
+
 
 int Dbg_Param = 0x1f;
 #define TestAp_Printf(flag, msg...) ((Dbg_Param & flag)?printf(msg):flag)
@@ -16,3 +18,5 @@ int Dbg_Param = 0x1f;
 #define TESTAP_DBG_FLOW		(1 << 2)
 #define TESTAP_DBG_FRAME	(1 << 3)
 #define TESTAP_DBG_BW	    (1 << 4)
+
+#endif

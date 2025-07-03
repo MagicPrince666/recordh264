@@ -6,6 +6,8 @@
  * @date 2022-11-27
  * @copyright Copyright (c) {2021} 个人版权所有
  */
+#ifndef __AVILIB_H__
+#define __AVILIB_H__
 
 #include <fcntl.h>
 #include <stdio.h>
@@ -33,8 +35,6 @@
 #include <limits.h>
 #include <stdlib.h>
 #include <string.h>
-
-#pragma once
 
 #include <iostream>
 
@@ -315,3 +315,5 @@ private:
     int AviAddIndexEntry(unsigned char *tag, long flags, unsigned long pos, unsigned long len);
     int AviWriteData(char *data, unsigned long length, int audio, int keyframe);
 };
+
+#endif

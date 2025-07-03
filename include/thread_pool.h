@@ -6,7 +6,8 @@
  * @date 2022-11-29
  * @copyright Copyright (c) {2021} 个人版权所有
  */
-#pragma once
+#ifndef __THREAD_POOL_H__
+#define __THREAD_POOL_H__
 
 #include <functional>
 #include <future>
@@ -170,3 +171,4 @@ public:
     }
 };
 
+#endif

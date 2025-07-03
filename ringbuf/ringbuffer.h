@@ -7,7 +7,8 @@
  * @copyright Copyright (c) {2021} 个人版权所有
  */
 
-#pragma once
+#ifndef __RING_BUFFER__
+#define __RING_BUFFER__
 
 #include <stdint.h>
 
@@ -77,3 +78,5 @@ private:
 
     RingBuffer *p_buffer_;
 };
+
+#endif
