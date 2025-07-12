@@ -54,7 +54,7 @@ private:
     int m_gop;
     size_t m_frame_size;
 
-    bool Init();
+    void Init();
 
     bool EncodeFrame(void* inputData, uint8_t* &outputData, size_t* outputSize);
 };

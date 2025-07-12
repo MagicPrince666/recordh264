@@ -9,7 +9,6 @@ RkMppEncoder::RkMppEncoder(std::string dev, uint32_t width, uint32_t height, uin
       m_width(width), m_height(height), m_fps(fps), m_bitrate(BIT_RATE), m_gop(GOP_SIZE),
       m_frame_size(width * height * 3 / 2)
 {
-    Init();
 }
 
 RkMppEncoder::~RkMppEncoder()
@@ -31,7 +30,7 @@ RkMppEncoder::~RkMppEncoder()
     }
 }
 
-bool RkMppEncoder::Init()
+void RkMppEncoder::Init()
 {
     std::cout << "RkMppEncoder::Init()" << std::endl;
     v4l2_ctx_ = std::make_shared<V4l2VideoCapture>(dev_name_, video_width_, video_height_, video_fps_);
@@ -54,28 +53,28 @@ bool RkMppEncoder::Init()
     ret = mpp_create(&m_ctx, &m_mpi);
     if (ret != MPP_OK) {
         fprintf(stderr, "mpp_create failed\n");
-        return false;
+        return;
     }
     
     // 初始化编码器
     ret = mpp_init(m_ctx, MPP_CTX_ENC, MPP_VIDEO_CodingAVC);
     if (ret != MPP_OK) {
         fprintf(stderr, "mpp_init failed\n");
-        return false;
+        return;
     }
     
     // 创建编码配置
     ret = mpp_enc_cfg_init(&m_cfg);
     if (ret != MPP_OK) {
         fprintf(stderr, "mpp_enc_cfg_init failed\n");
-        return false;
+        return;
     }
     
     // 获取默认配置
     ret = m_mpi->control(m_ctx, MPP_ENC_GET_CFG, m_cfg);
     if (ret != MPP_OK) {
         fprintf(stderr, "MPP_ENC_GET_CFG failed\n");
-        return false;
+        return;
     }
     
     // 设置编码参数
@@ -104,16 +103,15 @@ bool RkMppEncoder::Init()
     ret = m_mpi->control(m_ctx, MPP_ENC_SET_CFG, m_cfg);
     if (ret != MPP_OK) {
         fprintf(stderr, "MPP_ENC_SET_CFG failed\n");
-        return false;
+        return;
     }
     
     // 创建缓冲区组
     ret = mpp_buffer_group_get_internal(&m_buf_grp, MPP_BUFFER_TYPE_DRM);
     if (ret != MPP_OK) {
         fprintf(stderr, "mpp_buffer_group_get failed\n");
-        return false;
+        return;
     }
-    return true;
 }
 
 bool RkMppEncoder::EncodeFrame(void* inputData, uint8_t* &outputData, size_t* outputSize) {

@@ -166,10 +166,6 @@ int main(int argc, char **argv)
 
     spdlog::info("chip hardware concurrency {} !", std::thread::hardware_concurrency());
 
-#if defined(USE_RK_HW_ENCODER)
-    std::shared_ptr<RkMppEncoder> rk_encoder = std::make_shared<RkMppEncoder>();
-#else
-
     std::string format = "h264";
     std::string dev    = "/dev/video0";
 
@@ -187,7 +183,11 @@ int main(int argc, char **argv)
     std::shared_ptr<VideoFactory> video_stream_factory;
     if (format == "h264") {
         // 硬件编码H264
+#if defined(USE_RK_HW_ENCODER)
+        video_stream_factory = std::make_shared<MppCamera>();
+#else
         video_stream_factory = std::make_shared<UvcH264Camera>();
+#endif
     } else if (format == "mjpg") {
         // 硬件编码MJPG
         video_stream_factory = std::make_shared<MjpgCamera>();
@@ -204,7 +204,7 @@ int main(int argc, char **argv)
 #ifdef USE_LIBFAAC
     std::unique_ptr<Recorder> record(new Recorder());
 #endif
-#endif
+
     while (true) {
 #if !defined(USE_RK_HW_ENCODER)
 #ifdef USE_LIBFAAC
