@@ -143,10 +143,6 @@ private:
      */
     bool InitMmap();
 
-    void NV12_to_YUYV(int width, int height, void *src, void *dst);
-
-    void yuyv422ToYuv420p(int inWidth, int inHeight, uint8_t *pSrc, uint8_t *pDest);
-
     const char *V4l2FormatToString(uint32_t pixelformat);
     void ErrnoExit(const char *s);
     int32_t xioctl(int32_t fd, int32_t request, void *arg);

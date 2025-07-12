@@ -11,11 +11,9 @@
 
 #include <stdint.h>
 #include <stdio.h>
+#include <memory>
 
 #include "x264.h"
-
-// #define USE_NV12_FORMAT
-// #define USE_FMT_YUV420
 
 enum frametype {
     FRAME_TYPE_P = 0,
@@ -27,7 +25,7 @@ enum frametype {
 class H264Encoder
 {
 public:
-    H264Encoder(int32_t width, int32_t height);
+    H264Encoder(int32_t width, int32_t height, uint32_t pixelformat);
     ~H264Encoder();
 
     /**
@@ -72,6 +70,7 @@ private:
     int32_t video_width_;
     int32_t video_height_;
     EncoderData encode_;
+    uint32_t pixelformat_;
 };
 
 #endif

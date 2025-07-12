@@ -110,7 +110,7 @@ uint64_t V4l2VideoCapture::BuffOneFrame(uint8_t *data)
     }
 
     // this operator below will change buf.index and (0 <= buf.index <= 3)
-    if (-1 == ioctl(camera_.fd, VIDIOC_DQBUF, &buf)) { // 这里卡住了
+    if (-1 == ioctl(camera_.fd, VIDIOC_DQBUF, &buf)) {
         std::cerr << "VIDIOC_DQBUF error " <<  strerror(errno) << std::endl;
         switch (errno) {
         case EAGAIN:
@@ -258,8 +258,8 @@ bool V4l2VideoCapture::InitMmap()
 
     CLEAR(req);
 
-    if (can_ouput_mjpg_) {
-        req.count = 1;
+    if (camera_.v4l2_fmt.fmt.pix.pixelformat == V4L2_PIX_FMT_MJPEG) {
+        req.count = 2;
     } else {
         req.count = 6;
     }
@@ -510,58 +510,6 @@ bool V4l2VideoCapture::EnumV4l2Format()
     }
 
     return true;
-}
-
-void V4l2VideoCapture::NV12_to_YUYV(int width, int height, void *src, void *dst)
-{
-    int i = 0, j = 0;
-    int *src_y  = (int *)src;
-    int *src_uv = (int *)((char *)src + width * height);
-    int *line   = (int *)dst;
-
-    for (j = 0; j < height; j++) {
-        if (j % 2 != 0)
-            src_uv -= width >> 2;
-        for (i = 0; i < width >> 2; i++) {
-            *line++ = ((*src_y & 0x000000ff)) | ((*src_y & 0x0000ff00) << 8) |
-                      ((*src_uv & 0x000000ff) << 8) | ((*src_uv & 0x0000ff00) << 16);
-            *line++ = ((*src_y & 0x00ff0000) >> 16) | ((*src_y & 0xff000000) >> 8) |
-                      ((*src_uv & 0x00ff0000) >> 8) | ((*src_uv & 0xff000000));
-            src_y++;
-            src_uv++;
-        }
-    }
-}
-
-void V4l2VideoCapture::yuyv422ToYuv420p(int inWidth, int inHeight, uint8_t *pSrc, uint8_t *pDest)
-{
-    int i, j;
-    // 首先对I420的数据整体布局指定
-    uint8_t *u = pDest + (inWidth * inHeight);
-    uint8_t *v = u + (inWidth * inHeight) / 4;
-
-    for (i = 0; i < inHeight / 2; i++) {
-        /*采取的策略是:在外层循环里面，取两个相邻的行*/
-        uint8_t *src_l1 = pSrc + inWidth * 2 * 2 * i; // 因为4:2:2的原因，所以占用内存，相当一个像素占2个字节，2个像素合成4个字节
-        uint8_t *src_l2 = src_l1 + inWidth * 2;       // YUY2的偶数行下一行
-        uint8_t *y_l1   = pDest + inWidth * 2 * i;    // 偶数行
-        uint8_t *y_l2   = y_l1 + inWidth;             // 偶数行的下一行
-        for (j = 0; j < inWidth / 2; j++)             // 内层循环
-        {
-            // two pels in one go//一次合成两个像素
-            // 偶数行，取完整像素;Y,U,V;偶数行的下一行，只取Y
-            *y_l1++ = src_l1[0]; // Y
-            *u++    = src_l1[1]; // U
-            *y_l1++ = src_l1[2]; // Y
-            *v++    = src_l1[3]; // V
-            // 这里只有取Y
-            *y_l2++ = src_l2[0];
-            *y_l2++ = src_l2[2];
-            // YUY2,4个像素为一组
-            src_l1 += 4;
-            src_l2 += 4;
-        }
-    }
 }
 
 void V4l2VideoCapture::AddCallback(std::function<bool(const uint8_t *, const uint32_t)> handler)

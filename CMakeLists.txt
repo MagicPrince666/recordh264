@@ -51,6 +51,7 @@ include_directories(
     ringbuf
     sound
     mp3
+    calculate
 )
 
 file(GLOB main_srcs
@@ -63,12 +64,12 @@ file(GLOB main_srcs
     ringbuf/*.cpp
     sound/*.cpp
     mp3/*.cpp
+    calculate/*.cpp
 )
 
 if (USE_RK_HW_ENCODER)
 file(GLOB rk_mpp_srcs 
     rk_mpp/*.cpp
-    rk_mpp/*.c
 )
 list(APPEND main_srcs ${rk_mpp_srcs})
 endif ()
