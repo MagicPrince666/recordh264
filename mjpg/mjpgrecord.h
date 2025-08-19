@@ -58,6 +58,8 @@ private:
      */
     void StopCap();
 
+    std::string GetAfterLastSlash(const std::string& str);
+
 private:
     struct vdIn *video_;
     std::shared_ptr<V4l2Video> mjpg_cap_;

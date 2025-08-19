@@ -27,9 +27,17 @@ MjpgRecord::~MjpgRecord()
     }
 }
 
+std::string MjpgRecord::GetAfterLastSlash(const std::string& str) {
+    size_t pos = str.rfind('/');
+    if (pos != std::string::npos && pos + 1 < str.length()) {
+        return str.substr(pos + 1);
+    }
+    return str; // 如果没有'/'，返回整个字符串
+}
+
 void MjpgRecord::Init()
 {
-    std::string filename = getCurrentTime8() + ".avi";
+    std::string filename = GetAfterLastSlash(dev_name_) + "_" +getCurrentTime8() + ".avi";
     mjpg_cap_            = std::make_shared<V4l2Video>(dev_name_, video_width_, video_height_, video_fps_, V4L2_PIX_FMT_MJPEG, 1);
     avi_lib_             = std::make_shared<AviLib>(filename);
 

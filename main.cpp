@@ -164,56 +164,74 @@ int main(int argc, char **argv)
     signal(SIGFPE, _signal_handler);  // SIGFPE，数学相关的异常，如被0除，浮点溢出，等等
     signal(SIGABRT, _signal_handler); // SIGABRT，由调用abort函数产生，进程非正常退出
 
-    spdlog::info("chip hardware concurrency {} !", std::thread::hardware_concurrency());
+    spdlog::info("chip hardware concurrency {} argc = {}!", std::thread::hardware_concurrency(), argc);
 
-    std::string format = "h264";
-    std::string dev    = "/dev/video0";
+    std::vector<std::string> format = {"mjpg", "mjpg"};
+    std::vector<std::string> dev    = {"/dev/ToolCamera", "/dev/SurveillanceCamera"};
+    std::vector<std::shared_ptr<VideoStream>> video;
 
-    if (argc > 2) {
-        dev    = (char *)argv[1];
-        format = (char *)argv[2];
+    if (argc == 3) {
+        dev.resize(1);
+        dev[0]    = (char *)argv[1];
+        format[0] = (char *)argv[2];
+    } else if (argc == 5) {
+        dev.resize(2);
+        dev[0]    = (char *)argv[1];
+        format[0] = (char *)argv[2];
+        dev[1]    = (char *)argv[3];
+        format[1] = (char *)argv[4];
     } else {
-        spdlog::error("Please Set video farmat");
         spdlog::info("Eg:{} /dev/video0 h264", argv[0]);
+    }
+
+    if (dev.empty()) {
+        spdlog::error("Please Set video device");
         return 1;
     }
-
-    spdlog::info("{} farmat = {}", dev, format);
-
-    std::shared_ptr<VideoFactory> video_stream_factory;
-    if (format == "h264") {
-        // 硬件编码H264
+    video.resize(dev.size());
+    for (uint32_t i = 0; i < dev.size(); i++) {
+        spdlog::info("{} farmat = {}", dev[i], format[i]);
+        std::shared_ptr<VideoFactory> video_stream_factory;
+        if (format[i] == "h264") {
+            // 硬件编码H264
 #if defined(USE_RK_HW_ENCODER)
-        video_stream_factory = std::make_shared<MppCamera>();
+            video_stream_factory = std::make_shared<MppCamera>();
 #else
-        video_stream_factory = std::make_shared<UvcH264Camera>();
+            video_stream_factory = std::make_shared<UvcH264Camera>();
 #endif
-    } else if (format == "mjpg") {
-        // 硬件编码MJPG
-        video_stream_factory = std::make_shared<MjpgCamera>();
-    } else if (format == "sh264") {
-        // 软件编码H264
-        video_stream_factory = std::make_shared<UvcYuyvCamera>();
-    } else {
-        spdlog::error("Not support farmat");
+        } else if (format[i] == "mjpg") {
+            // 硬件编码MJPG
+            video[i] = std::make_shared<MjpgRecord>(dev[i], 1920, 1080, 30);
+            video[i]->Init();
+            continue;
+        } else if (format[i] == "sh264") {
+            // 软件编码H264
+            video_stream_factory = std::make_shared<UvcYuyvCamera>();
+        } else {
+            spdlog::error("Not support farmat");
+        }
+        if (video_stream_factory) {
+            video[i] = std::make_shared<MjpgRecord>(dev[i], 1920, 1080, 30);
+            video[i]->Init();
+        }
     }
-    if (video_stream_factory) {
-        std::shared_ptr<VideoStream> video(video_stream_factory->createVideoStream(dev, 1280, 720, 30));
-        video->Init();
-    }
+
+#if 0 
 #ifdef USE_LIBFAAC
     std::unique_ptr<Recorder> record(new Recorder());
 #endif
-
+#endif
     while (true) {
 #if !defined(USE_RK_HW_ENCODER)
+#if 0 
 #ifdef USE_LIBFAAC
         if (record) {
             record->recodeAAC();
         }
 #endif
 #endif
-        usleep(100000);
+#endif
+        std::this_thread::sleep_for(std::chrono::milliseconds(800));
     }
 
     return 0;

@@ -64,12 +64,13 @@ file(GLOB main_srcs
     ringbuf/*.cpp
     sound/*.cpp
     mp3/*.cpp
-    calculate/*.cpp
+    calculate/calculate_cpu.cpp
 )
 
 if (USE_RK_HW_ENCODER)
 file(GLOB rk_mpp_srcs 
     rk_mpp/*.cpp
+    calculate/calculate_rockchip.cpp
 )
 list(APPEND main_srcs ${rk_mpp_srcs})
 endif ()
